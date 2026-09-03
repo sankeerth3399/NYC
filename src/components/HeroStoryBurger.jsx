@@ -20,7 +20,6 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
   const [activeCallouts, setActiveCallouts] = useState([]);
   const [viewportWidth, setViewportWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
 
-  // Responsive viewport listener
   useEffect(() => {
     const handleResize = () => {
       setViewportWidth(window.innerWidth);
@@ -33,7 +32,7 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
   const isTablet = viewportWidth >= 768 && viewportWidth < 1100;
   const isDesktop = viewportWidth >= 1100;
 
-  // Preload frames for smooth scrubbing
+  // Preload frames
   useEffect(() => {
     let loadedCount = 0;
     const images = [];
@@ -56,7 +55,7 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
     imagesRef.current = images;
   }, []);
 
-  // Adaptive Canvas Rendering for Perfect Fit on ANY Screen
+  // Adaptive Canvas Rendering: Full Animation Fully Visible on Mobile (No Cropping)
   const renderFrame = (index) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -76,18 +75,27 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
       let scale;
 
       if (isPortrait) {
-        // Mobile & iPad Portrait: Scale so food is fully visible without clipping top/bottom buns
-        scale = Math.min((cw * 1.55) / iw, (ch * 0.80) / ih);
+        // Mobile & Tablet Portrait:
+        // Contain the FULL 16:9 widescreen animation (fries on left, exploding burger in center, shake on right)
+        // With comfortable margins so NOTHING is cut off at the sides, top, or bottom.
+        scale = Math.min((cw * 0.94) / iw, (ch * 0.44) / ih);
       } else {
-        // Laptops & Desktops: Scale so it fits comfortably between header & footer HUD
-        scale = Math.min((cw * 1.12) / iw, (ch * 0.84) / ih);
+        // Laptops & Desktops:
+        scale = Math.min((cw * 0.92) / iw, (ch * 0.78) / ih);
       }
 
       const nw = iw * scale;
       const nh = ih * scale;
       const cx = (cw - nw) / 2;
-      // Slight upward offset on portrait to avoid bottom scrub bar
-      const cy = isPortrait ? (ch - nh) / 2 - 20 : (ch - nh) / 2;
+
+      // On portrait/mobile, position food slightly above center so it never collides with bottom scrub bar or cards
+      let cy;
+      if (isPortrait) {
+        // Position comfortably in the upper-middle area (below top header, above bottom HUD)
+        cy = Math.max(75, (ch - nh) / 2 - (isMobile ? 35 : 15));
+      } else {
+        cy = (ch - nh) / 2;
+      }
 
       ctx.clearRect(0, 0, cw, ch);
       ctx.drawImage(img, cx, cy, nw, nh);
@@ -128,7 +136,7 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
           setCurrentFrame(targetFrame + 1);
           renderFrame(targetFrame);
 
-          if (prog > 0.18 && prog < 0.65) {
+          if (prog > 0.15 && prog < 0.70) {
             setActiveCallouts(BURGER_LAYERS);
           } else {
             setActiveCallouts([]);
@@ -146,13 +154,12 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
       window.removeEventListener('resize', updateCanvasSize);
       ctx.revert();
     };
-  }, []);
+  }, [viewportWidth]);
 
-  // Determine stage status text
   let statusText = 'SCROLL TO UNPACK EVERY LAYER';
-  if (scrollProgress > 0.18 && scrollProgress < 0.65) {
+  if (scrollProgress > 0.15 && scrollProgress < 0.70) {
     statusText = 'PHYSICAL SEPARATION // 7 LAYERS ISOLATED';
-  } else if (scrollProgress >= 0.65 && scrollProgress < 0.92) {
+  } else if (scrollProgress >= 0.70 && scrollProgress < 0.92) {
     statusText = 'REASSEMBLING IN SEQUENCE // DOCKING';
   } else if (scrollProgress >= 0.92) {
     statusText = 'PERFECTLY ASSEMBLED // READY TO SERVE';
@@ -161,7 +168,7 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
   // Active layer calculation for mobile & tablet focused view
   const activeLayerIndex = Math.min(
     BURGER_LAYERS.length - 1,
-    Math.max(0, Math.floor(((scrollProgress - 0.18) / 0.47) * BURGER_LAYERS.length))
+    Math.max(0, Math.floor(((scrollProgress - 0.15) / 0.55) * BURGER_LAYERS.length))
   );
   const focusedLayer = BURGER_LAYERS[activeLayerIndex];
 
@@ -179,6 +186,11 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
     );
     window.open(`https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${text}`, '_blank');
   };
+
+  // On mobile: top card fades out IMMEDIATELY on scroll (by 3%) so food is completely clear!
+  const isIntroCardVisible = isMobile
+    ? scrollProgress < 0.03
+    : scrollProgress < 0.12 || scrollProgress > 0.88;
 
   return (
     <section
@@ -206,14 +218,14 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
         onScrubClick={handleScrubClick}
       />
 
-      {/* Left Lateral Story Telemetry Panel (Desktop & Laptop) */}
+      {/* Left Lateral Story Telemetry Panel (Fades out when scrolling) */}
       <div
         className="hud-side-panel hud-left-panel"
         style={{
-          opacity: scrollProgress < 0.12 ? 1 : scrollProgress > 0.88 ? 1 : 0,
-          pointerEvents: scrollProgress < 0.14 || scrollProgress > 0.86 ? 'auto' : 'none',
-          visibility: scrollProgress >= 0.14 && scrollProgress <= 0.86 ? 'hidden' : 'visible',
-          transition: 'opacity 0.4s ease, visibility 0.4s ease',
+          opacity: isIntroCardVisible ? 1 : 0,
+          pointerEvents: isIntroCardVisible ? 'auto' : 'none',
+          visibility: isIntroCardVisible ? 'visible' : 'hidden',
+          transition: 'opacity 0.3s ease, visibility 0.3s ease',
         }}
       >
         <p className="hud-tagline">SMASHED TO ORDER // UTICA, NY</p>
@@ -224,20 +236,20 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
           Two fresh 100% beef patties smashed thin at 500°F onto our seasoned flat-top griddle.
           Seared craggy crust, layered American & sharp cheddar melt, house deli sauce.
         </p>
-        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.65rem', flexWrap: 'wrap' }}>
           <button
             onClick={() => onOpenOrderModal({ name: 'Double Smashed Cheeseburger w/ Fries', price: 7.99 })}
             className="btn-gold"
-            style={{ padding: '0.6rem 1.15rem', fontSize: '0.85rem' }}
+            style={{ padding: '0.55rem 1rem', fontSize: '0.82rem' }}
           >
             Order — $7.99
           </button>
           <button
             onClick={handleWhatsAppQuickOrder}
             className="btn-whatsapp"
-            style={{ padding: '0.6rem 1.15rem', fontSize: '0.85rem' }}
+            style={{ padding: '0.55rem 1rem', fontSize: '0.82rem' }}
           >
-            <MessageSquare size={15} />
+            <MessageSquare size={14} />
             WhatsApp
           </button>
         </div>
@@ -248,10 +260,10 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
         <div
           className="hud-side-panel hud-right-panel"
           style={{
-            opacity: scrollProgress < 0.14 ? 1 : scrollProgress > 0.86 ? 1 : 0,
-            pointerEvents: scrollProgress < 0.14 || scrollProgress > 0.86 ? 'auto' : 'none',
-            visibility: scrollProgress >= 0.14 && scrollProgress <= 0.86 ? 'hidden' : 'visible',
-            transition: 'opacity 0.4s ease, visibility 0.4s ease',
+            opacity: scrollProgress < 0.12 ? 1 : scrollProgress > 0.88 ? 1 : 0,
+            pointerEvents: scrollProgress < 0.12 || scrollProgress > 0.88 ? 'auto' : 'none',
+            visibility: scrollProgress < 0.12 || scrollProgress > 0.88 ? 'visible' : 'hidden',
+            transition: 'opacity 0.3s ease, visibility 0.3s ease',
           }}
         >
           <p className="hud-tagline">CRAFT METRICS</p>
@@ -316,11 +328,11 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
       )}
 
       {/* 2. Tablets & Mobile (< 1100px): Clean centered active layer badge */}
-      {!isDesktop && scrollProgress > 0.18 && scrollProgress < 0.65 && focusedLayer && (
+      {!isDesktop && scrollProgress > 0.15 && scrollProgress < 0.70 && focusedLayer && (
         <div
           style={{
             position: 'absolute',
-            bottom: isMobile ? '5.5rem' : '6.5rem',
+            bottom: isMobile ? '5.25rem' : '6.5rem',
             left: '50%',
             transform: 'translateX(-50%)',
             background: 'rgba(8, 18, 12, 0.94)',
@@ -328,26 +340,26 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
             WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid var(--border-green)',
             borderRadius: '10px',
-            padding: isMobile ? '0.65rem 1rem' : '0.85rem 1.5rem',
-            width: 'min(92vw, 420px)',
+            padding: isMobile ? '0.55rem 0.85rem' : '0.85rem 1.5rem',
+            width: 'min(92vw, 390px)',
             boxShadow: '0 12px 35px rgba(0, 0, 0, 0.85)',
             zIndex: 25,
             textAlign: 'center',
             transition: 'all 0.3s ease',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--gold-light)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--gold-light)' }}>
               LAYER 0{activeLayerIndex + 1} / 07 • {focusedLayer.tag}
             </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--green-light)' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--green-light)' }}>
               {focusedLayer.temp}
             </span>
           </div>
-          <h4 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? '1.15rem' : '1.35rem', color: '#ffffff', margin: '0.1rem 0' }}>
+          <h4 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? '1.05rem' : '1.35rem', color: '#ffffff', margin: '0.1rem 0' }}>
             {focusedLayer.name}
           </h4>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.35 }}>
+          <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.3 }}>
             {focusedLayer.specs}
           </p>
         </div>
@@ -356,7 +368,7 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
       {/* Initial Scroll Prompt */}
       <div
         className="scroll-prompt-indicator"
-        style={{ opacity: scrollProgress < 0.08 ? 1 : 0 }}
+        style={{ opacity: scrollProgress < 0.05 ? 1 : 0 }}
       >
         <div className="scroll-prompt-mouse">
           <div className="scroll-prompt-wheel" />
@@ -364,54 +376,54 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
         <span>SCROLL TO UNPACK</span>
       </div>
 
-      {/* Final Reassembled Lock Badge */}
-      {scrollProgress >= 0.9 && (
+      {/* Final Reassembled Lock Badge (At scroll >= 85%) */}
+      {scrollProgress >= 0.85 && (
         <div
           style={{
             position: 'absolute',
-            bottom: isMobile ? '5.5rem' : '6.5rem',
+            bottom: isMobile ? '5.25rem' : '6.5rem',
             left: '50%',
             transform: 'translateX(-50%)',
             background: 'rgba(10, 26, 17, 0.96)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid var(--green-bright)',
-            padding: 'clamp(0.6rem, 2vw, 0.85rem) clamp(1rem, 3vw, 1.75rem)',
+            padding: 'clamp(0.5rem, 2vw, 0.85rem) clamp(0.85rem, 3vw, 1.75rem)',
             borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
-            gap: 'clamp(0.6rem, 2vw, 1rem)',
+            gap: 'clamp(0.5rem, 2vw, 1rem)',
             boxShadow: '0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px var(--green-glow)',
             zIndex: 30,
-            width: 'min(92vw, 500px)',
+            width: 'min(92vw, 480px)',
             justifyContent: 'space-between',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <CheckCircle2 color="var(--green-bright)" size={22} style={{ flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+            <CheckCircle2 color="var(--green-bright)" size={20} style={{ flexShrink: 0 }} />
             <div>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--green-light)', margin: 0 }}>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--green-light)', margin: 0 }}>
                 ASSEMBLY LOCKED
               </p>
-              <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1rem, 2.5vw, 1.25rem)', color: '#ffffff', margin: 0 }}>
+              <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(0.95rem, 2.5vw, 1.25rem)', color: '#ffffff', margin: 0 }}>
                 ONE PERFECT BURGER
               </h4>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
             <button
               onClick={handleWhatsAppQuickOrder}
               className="btn-whatsapp"
-              style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}
+              style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}
               title="Order on WhatsApp"
             >
-              <MessageSquare size={14} />
+              <MessageSquare size={13} />
               WhatsApp
             </button>
             <button
               onClick={() => onOpenOrderModal({ name: 'Double Smashed Cheeseburger w/ Fries', price: 7.99 })}
               className="btn-gold"
-              style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}
+              style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}
             >
               Order
             </button>

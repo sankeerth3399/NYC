@@ -31,9 +31,8 @@ export default function SandwichStory({ onOpenOrderModal }) {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      const heightFactor = Math.min(1, Math.max(0.45, window.innerHeight / 920));
-      const widthFactor = Math.min(1, Math.max(0.65, window.innerWidth / 1200));
-      const scaleMultiplier = heightFactor * (isMobile ? 0.6 : 0.85);
+      const heightFactor = Math.min(1, Math.max(0.40, window.innerHeight / 920));
+      const scaleMultiplier = heightFactor * (isMobile ? 0.38 : 0.85);
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -46,7 +45,7 @@ export default function SandwichStory({ onOpenOrderModal }) {
           onUpdate: (self) => {
             const prog = self.progress;
             setScrollProgress(prog);
-            setCalloutsActive(prog > 0.2 && prog < 0.7);
+            setCalloutsActive(prog > 0.15 && prog < 0.70);
           },
         },
       });
@@ -89,7 +88,7 @@ export default function SandwichStory({ onOpenOrderModal }) {
         tl.to(
           el,
           {
-            y: yTarget + (idx % 2 === 0 ? 5 : -5),
+            y: yTarget + (idx % 2 === 0 ? 4 : -4),
             duration: 0.2,
             ease: 'sine.inOut',
           },
@@ -129,9 +128,9 @@ export default function SandwichStory({ onOpenOrderModal }) {
   }, [viewportWidth]);
 
   let statusText = 'SCROLL TO EXPLODE DELI HERO';
-  if (scrollProgress > 0.2 && scrollProgress < 0.7) {
+  if (scrollProgress > 0.15 && scrollProgress < 0.70) {
     statusText = '7 ARTISAN LAYERS FLOATING // DEEP SPECS';
-  } else if (scrollProgress >= 0.7 && scrollProgress < 0.92) {
+  } else if (scrollProgress >= 0.70 && scrollProgress < 0.92) {
     statusText = 'REASSEMBLING // DELI HERO LOCKING';
   } else if (scrollProgress >= 0.92) {
     statusText = 'REASSEMBLED // READY FOR THE GRILL';
@@ -140,7 +139,7 @@ export default function SandwichStory({ onOpenOrderModal }) {
   // Active layer calculation for mobile & tablet focused view
   const activeLayerIndex = Math.min(
     SANDWICH_LAYERS.length - 1,
-    Math.max(0, Math.floor(((scrollProgress - 0.2) / 0.5) * SANDWICH_LAYERS.length))
+    Math.max(0, Math.floor(((scrollProgress - 0.15) / 0.55) * SANDWICH_LAYERS.length))
   );
   const focusedSandwichLayer = SANDWICH_LAYERS[activeLayerIndex];
 
@@ -150,6 +149,11 @@ export default function SandwichStory({ onOpenOrderModal }) {
     );
     window.open(`https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${text}`, '_blank');
   };
+
+  // On mobile: top card fades out IMMEDIATELY on scroll (by 3%) so sandwich is completely clear!
+  const isIntroCardVisible = isMobile
+    ? scrollProgress < 0.03
+    : scrollProgress < 0.15 || scrollProgress > 0.85;
 
   return (
     <section
@@ -173,9 +177,9 @@ export default function SandwichStory({ onOpenOrderModal }) {
       <div
         style={{
           position: 'absolute',
-          top: '5.25rem',
-          left: 'clamp(1rem, 3vw, 2rem)',
-          right: 'clamp(1rem, 3vw, 2rem)',
+          top: isMobile ? '4.2rem' : '5.25rem',
+          left: 'clamp(0.75rem, 3vw, 2rem)',
+          right: 'clamp(0.75rem, 3vw, 2rem)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -184,23 +188,23 @@ export default function SandwichStory({ onOpenOrderModal }) {
           gap: '0.5rem',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.35rem',
               fontFamily: 'var(--font-mono)',
-              fontSize: 'clamp(0.68rem, 1.2vw, 0.75rem)',
+              fontSize: 'clamp(0.65rem, 1.2vw, 0.75rem)',
               color: 'var(--gold-light)',
               background: 'rgba(245, 158, 11, 0.15)',
-              padding: '0.2rem 0.6rem',
+              padding: '0.2rem 0.55rem',
               borderRadius: '4px',
               border: '1px solid var(--border-gold)',
               whiteSpace: 'nowrap',
             }}
           >
-            <Flame size={13} />
+            <Flame size={12} />
             HOT DELI HERO CRAFT
           </span>
           <span
@@ -219,10 +223,10 @@ export default function SandwichStory({ onOpenOrderModal }) {
         <div
           style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: 'clamp(0.65rem, 1.2vw, 0.75rem)',
+            fontSize: 'clamp(0.62rem, 1.2vw, 0.75rem)',
             color: 'var(--green-bright)',
             background: 'rgba(6, 11, 8, 0.7)',
-            padding: '0.2rem 0.6rem',
+            padding: '0.2rem 0.55rem',
             borderRadius: '4px',
             border: '1px solid var(--border-subtle)',
             whiteSpace: 'nowrap',
@@ -236,10 +240,10 @@ export default function SandwichStory({ onOpenOrderModal }) {
       <div
         className="hud-side-panel hud-left-panel"
         style={{
-          opacity: scrollProgress < 0.15 ? 1 : scrollProgress > 0.85 ? 1 : 0,
-          pointerEvents: scrollProgress < 0.15 || scrollProgress > 0.85 ? 'auto' : 'none',
-          visibility: scrollProgress >= 0.15 && scrollProgress <= 0.85 ? 'hidden' : 'visible',
-          transition: 'opacity 0.4s ease, visibility 0.4s ease',
+          opacity: isIntroCardVisible ? 1 : 0,
+          pointerEvents: isIntroCardVisible ? 'auto' : 'none',
+          visibility: isIntroCardVisible ? 'visible' : 'hidden',
+          transition: 'opacity 0.3s ease, visibility 0.3s ease',
           zIndex: 25,
         }}
       >
@@ -251,20 +255,20 @@ export default function SandwichStory({ onOpenOrderModal }) {
           Slow-griddled Boar’s Head spiced pastrami chopped with seasoned ribeye beef, caramelized sweet onions,
           melted Swiss & provolone on a toasted Utica sesame hero roll.
         </p>
-        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.65rem', flexWrap: 'wrap' }}>
           <button
             onClick={() => onOpenOrderModal({ name: 'The Famous Utica Chopped Cheese', price: 7.49 })}
             className="btn-gold"
-            style={{ padding: '0.6rem 1.15rem', fontSize: '0.85rem' }}
+            style={{ padding: '0.55rem 1rem', fontSize: '0.82rem' }}
           >
             Order Hero — $7.49
           </button>
           <button
             onClick={handleWhatsAppHeroOrder}
             className="btn-whatsapp"
-            style={{ padding: '0.6rem 1.15rem', fontSize: '0.85rem' }}
+            style={{ padding: '0.55rem 1rem', fontSize: '0.82rem' }}
           >
-            <MessageSquare size={15} />
+            <MessageSquare size={14} />
             WhatsApp
           </button>
         </div>
@@ -272,7 +276,15 @@ export default function SandwichStory({ onOpenOrderModal }) {
 
       {/* Center 3D Sandwich Composition Stage */}
       <div className="sandwich-stage" style={{ pointerEvents: 'none', zIndex: 10 }}>
-        <div ref={stackWrapperRef} className="sandwich-stack-wrapper">
+        <div
+          ref={stackWrapperRef}
+          className="sandwich-stack-wrapper"
+          style={{
+            width: isMobile ? 'min(88vw, 360px)' : 'min(88vw, 620px)',
+            height: isMobile ? 'min(50vh, 320px)' : 'min(60vh, 420px)',
+            transform: isMobile ? 'translateY(-20px)' : 'none',
+          }}
+        >
           {/* Fully Assembled Sandwich Image */}
           <div
             ref={assembledImgRef}
@@ -290,8 +302,8 @@ export default function SandwichStory({ onOpenOrderModal }) {
               src="/assets/sandwich/sandwich_assembled.jpg"
               alt="Meko Deli Assembled Chopped Cheese Hero"
               style={{
-                maxWidth: '92%',
-                maxHeight: '80%',
+                maxWidth: isMobile ? '82%' : '92%',
+                maxHeight: isMobile ? '65%' : '80%',
                 objectFit: 'contain',
                 borderRadius: '8px',
                 boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(245, 158, 11, 0.25)',
@@ -329,15 +341,15 @@ export default function SandwichStory({ onOpenOrderModal }) {
                       : 'linear-gradient(180deg, #92400e, #78350f)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span
                     style={{
                       fontFamily: 'var(--font-mono)',
-                      fontSize: '0.68rem',
+                      fontSize: '0.65rem',
                       fontWeight: 700,
                       color: '#ffffff',
                       background: 'rgba(0, 0, 0, 0.4)',
-                      padding: '0.15rem 0.45rem',
+                      padding: '0.12rem 0.4rem',
                       borderRadius: '3px',
                       flexShrink: 0,
                     }}
@@ -347,7 +359,7 @@ export default function SandwichStory({ onOpenOrderModal }) {
                   <span
                     style={{
                       fontFamily: 'var(--font-display)',
-                      fontSize: 'clamp(0.85rem, 1.6vw, 1.2rem)',
+                      fontSize: 'clamp(0.82rem, 1.6vw, 1.2rem)',
                       fontWeight: 700,
                       color: '#ffffff',
                       textShadow: '0 2px 4px rgba(0, 0, 0, 0.6)',
@@ -360,10 +372,10 @@ export default function SandwichStory({ onOpenOrderModal }) {
                 <span
                   style={{
                     fontFamily: 'var(--font-mono)',
-                    fontSize: '0.68rem',
+                    fontSize: '0.65rem',
                     color: 'rgba(255, 255, 255, 0.9)',
                     background: 'rgba(0, 0, 0, 0.35)',
-                    padding: '0.15rem 0.5rem',
+                    padding: '0.12rem 0.45rem',
                     borderRadius: '4px',
                     whiteSpace: 'nowrap',
                     flexShrink: 0,
@@ -411,11 +423,11 @@ export default function SandwichStory({ onOpenOrderModal }) {
       )}
 
       {/* 2. Tablets & Mobile (< 1100px): Focused centered layer badge */}
-      {!isDesktop && scrollProgress > 0.2 && scrollProgress < 0.7 && focusedSandwichLayer && (
+      {!isDesktop && scrollProgress > 0.15 && scrollProgress < 0.70 && focusedSandwichLayer && (
         <div
           style={{
             position: 'absolute',
-            bottom: isMobile ? '5.5rem' : '6.5rem',
+            bottom: isMobile ? '5.25rem' : '6.5rem',
             left: '50%',
             transform: 'translateX(-50%)',
             background: 'rgba(8, 18, 12, 0.94)',
@@ -423,79 +435,79 @@ export default function SandwichStory({ onOpenOrderModal }) {
             WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid var(--border-gold)',
             borderRadius: '10px',
-            padding: isMobile ? '0.65rem 1rem' : '0.85rem 1.5rem',
-            width: 'min(92vw, 420px)',
+            padding: isMobile ? '0.55rem 0.85rem' : '0.85rem 1.5rem',
+            width: 'min(92vw, 390px)',
             boxShadow: '0 12px 35px rgba(0, 0, 0, 0.85)',
             zIndex: 25,
             textAlign: 'center',
             transition: 'all 0.3s ease',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--green-light)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--green-light)' }}>
               LAYER 0{activeLayerIndex + 1} / 07 • {focusedSandwichLayer.tag}
             </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--gold-light)' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--gold-light)' }}>
               {focusedSandwichLayer.temp}
             </span>
           </div>
-          <h4 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? '1.15rem' : '1.35rem', color: '#ffffff', margin: '0.1rem 0' }}>
+          <h4 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? '1.05rem' : '1.35rem', color: '#ffffff', margin: '0.1rem 0' }}>
             {focusedSandwichLayer.name}
           </h4>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.35 }}>
+          <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.3 }}>
             {focusedSandwichLayer.specs}
           </p>
         </div>
       )}
 
       {/* Reassembled Locked Toast Badge */}
-      {scrollProgress >= 0.9 && (
+      {scrollProgress >= 0.85 && (
         <div
           style={{
             position: 'absolute',
-            bottom: isMobile ? '4rem' : '5rem',
+            bottom: isMobile ? '3.8rem' : '5rem',
             left: '50%',
             transform: 'translateX(-50%)',
             background: 'rgba(10, 26, 17, 0.96)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid var(--gold-light)',
-            padding: 'clamp(0.6rem, 2vw, 0.85rem) clamp(1rem, 3vw, 1.75rem)',
+            padding: 'clamp(0.5rem, 2vw, 0.85rem) clamp(0.85rem, 3vw, 1.75rem)',
             borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
-            gap: 'clamp(0.6rem, 2vw, 1rem)',
+            gap: 'clamp(0.5rem, 2vw, 1rem)',
             boxShadow: '0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px var(--gold-glow)',
             zIndex: 30,
-            width: 'min(92vw, 500px)',
+            width: 'min(92vw, 480px)',
             justifyContent: 'space-between',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <CheckCircle2 color="var(--gold-light)" size={22} style={{ flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+            <CheckCircle2 color="var(--gold-light)" size={20} style={{ flexShrink: 0 }} />
             <div>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--gold-light)', margin: 0 }}>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--gold-light)', margin: 0 }}>
                 REASSEMBLY LOCKED
               </p>
-              <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1rem, 2.5vw, 1.25rem)', color: '#ffffff', margin: 0 }}>
+              <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(0.95rem, 2.5vw, 1.25rem)', color: '#ffffff', margin: 0 }}>
                 THE UTICA CHOPPED CHEESE
               </h4>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
             <button
               onClick={handleWhatsAppHeroOrder}
               className="btn-whatsapp"
-              style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}
+              style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}
               title="Order on WhatsApp"
             >
-              <MessageSquare size={14} />
+              <MessageSquare size={13} />
               WhatsApp
             </button>
             <button
               onClick={() => onOpenOrderModal({ name: 'The Famous Utica Chopped Cheese', price: 7.49 })}
               className="btn-gold"
-              style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}
+              style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}
             >
               Order
             </button>
