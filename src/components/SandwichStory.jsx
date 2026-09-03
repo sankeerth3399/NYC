@@ -15,19 +15,26 @@ export default function SandwichStory({ onOpenOrderModal }) {
   const assembledImgRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [calloutsActive, setCalloutsActive] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [viewportWidth, setViewportWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
 
   useEffect(() => {
-    const checkViewport = () => {
-      setIsMobile(window.innerWidth < 768);
+    const handleResize = () => {
+      setViewportWidth(window.innerWidth);
     };
-    checkViewport();
-    window.addEventListener('resize', checkViewport);
-    return () => window.removeEventListener('resize', checkViewport);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const isMobile = viewportWidth < 768;
+  const isTablet = viewportWidth >= 768 && viewportWidth < 1100;
+  const isDesktop = viewportWidth >= 1100;
 
   useEffect(() => {
     const ctx = gsap.context(() => {
+      const heightFactor = Math.min(1, Math.max(0.45, window.innerHeight / 920));
+      const widthFactor = Math.min(1, Math.max(0.65, window.innerWidth / 1200));
+      const scaleMultiplier = heightFactor * (isMobile ? 0.6 : 0.85);
+
       const tl = gsap.timeline({
         scrollTrigger: {
           id: 'sandwich-st',
@@ -56,12 +63,11 @@ export default function SandwichStory({ onOpenOrderModal }) {
         0
       );
 
-      // Separate each individual layer with 3D depth and offsets
+      // Separate each individual layer with 3D depth and viewport-scaled offsets
       layersRef.current.forEach((el, idx) => {
         if (!el) return;
         const layerData = SANDWICH_LAYERS[idx];
-        const multiplier = isMobile ? 0.75 : 1;
-        const yTarget = layerData.yOffset * multiplier;
+        const yTarget = layerData.yOffset * scaleMultiplier;
         const rot = layerData.rotate;
 
         // Step 1: Explode outwards
@@ -69,9 +75,9 @@ export default function SandwichStory({ onOpenOrderModal }) {
           el,
           {
             y: yTarget,
-            rotateX: idx < 3 ? 14 : idx > 3 ? -14 : 0,
+            rotateX: idx < 3 ? 12 : idx > 3 ? -12 : 0,
             rotateZ: rot,
-            scale: 1 + Math.abs(idx - 3) * 0.015,
+            scale: 1 + Math.abs(idx - 3) * 0.012,
             opacity: 1,
             duration: 0.5,
             ease: 'power2.out',
@@ -83,7 +89,7 @@ export default function SandwichStory({ onOpenOrderModal }) {
         tl.to(
           el,
           {
-            y: yTarget + (idx % 2 === 0 ? 6 : -6),
+            y: yTarget + (idx % 2 === 0 ? 5 : -5),
             duration: 0.2,
             ease: 'sine.inOut',
           },
@@ -120,7 +126,7 @@ export default function SandwichStory({ onOpenOrderModal }) {
     }, sectionRef);
 
     return () => ctx.revert();
-  }, [isMobile]);
+  }, [viewportWidth]);
 
   let statusText = 'SCROLL TO EXPLODE DELI HERO';
   if (scrollProgress > 0.2 && scrollProgress < 0.7) {
@@ -131,12 +137,12 @@ export default function SandwichStory({ onOpenOrderModal }) {
     statusText = 'REASSEMBLED // READY FOR THE GRILL';
   }
 
-  // Active layer calculation for mobile focused view
+  // Active layer calculation for mobile & tablet focused view
   const activeLayerIndex = Math.min(
     SANDWICH_LAYERS.length - 1,
     Math.max(0, Math.floor(((scrollProgress - 0.2) / 0.5) * SANDWICH_LAYERS.length))
   );
-  const mobileCurrentLayer = SANDWICH_LAYERS[activeLayerIndex];
+  const focusedSandwichLayer = SANDWICH_LAYERS[activeLayerIndex];
 
   const handleWhatsAppHeroOrder = () => {
     const text = encodeURIComponent(
@@ -230,8 +236,10 @@ export default function SandwichStory({ onOpenOrderModal }) {
       <div
         className="hud-side-panel hud-left-panel"
         style={{
-          opacity: scrollProgress < 0.15 ? 1 : scrollProgress > 0.85 ? 1 : 0.08,
+          opacity: scrollProgress < 0.15 ? 1 : scrollProgress > 0.85 ? 1 : 0,
           pointerEvents: scrollProgress < 0.15 || scrollProgress > 0.85 ? 'auto' : 'none',
+          visibility: scrollProgress >= 0.15 && scrollProgress <= 0.85 ? 'hidden' : 'visible',
+          transition: 'opacity 0.4s ease, visibility 0.4s ease',
           zIndex: 25,
         }}
       >
@@ -243,7 +251,7 @@ export default function SandwichStory({ onOpenOrderModal }) {
           Slow-griddled Boar’s Head spiced pastrami chopped with seasoned ribeye beef, caramelized sweet onions,
           melted Swiss & provolone on a toasted Utica sesame hero roll.
         </p>
-        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.85rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
           <button
             onClick={() => onOpenOrderModal({ name: 'The Famous Utica Chopped Cheese', price: 7.49 })}
             className="btn-gold"
@@ -283,7 +291,7 @@ export default function SandwichStory({ onOpenOrderModal }) {
               alt="Meko Deli Assembled Chopped Cheese Hero"
               style={{
                 maxWidth: '92%',
-                maxHeight: '88%',
+                maxHeight: '80%',
                 objectFit: 'contain',
                 borderRadius: '8px',
                 boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(245, 158, 11, 0.25)',
@@ -339,7 +347,7 @@ export default function SandwichStory({ onOpenOrderModal }) {
                   <span
                     style={{
                       fontFamily: 'var(--font-display)',
-                      fontSize: 'clamp(0.9rem, 1.8vw, 1.25rem)',
+                      fontSize: 'clamp(0.85rem, 1.6vw, 1.2rem)',
                       fontWeight: 700,
                       color: '#ffffff',
                       textShadow: '0 2px 4px rgba(0, 0, 0, 0.6)',
@@ -369,13 +377,13 @@ export default function SandwichStory({ onOpenOrderModal }) {
         </div>
       </div>
 
-      {/* 1. Desktop Floating Callouts (>= 768px) */}
-      {!isMobile && (
+      {/* 1. Large Desktops (>= 1100px): Lateral floating callouts */}
+      {isDesktop && (
         <div className="ingredient-callout-container">
           {SANDWICH_LAYERS.map((layer, idx) => {
             const isLeft = layer.side === 'left';
-            const topPercent = 20 + idx * 9.5;
-            const leftPercent = isLeft ? 10 : 70;
+            const topPercent = 18 + idx * 10;
+            const leftPercent = isLeft ? 8 : 72;
 
             return (
               <div
@@ -384,7 +392,7 @@ export default function SandwichStory({ onOpenOrderModal }) {
                 style={{
                   top: `${topPercent}%`,
                   left: `${leftPercent}%`,
-                  transitionDelay: `${idx * 0.04}s`,
+                  transitionDelay: `${idx * 0.03}s`,
                   border: '1px solid var(--border-gold)',
                 }}
               >
@@ -402,40 +410,40 @@ export default function SandwichStory({ onOpenOrderModal }) {
         </div>
       )}
 
-      {/* 2. Mobile Focused Callout (< 768px) */}
-      {isMobile && scrollProgress > 0.2 && scrollProgress < 0.7 && mobileCurrentLayer && (
+      {/* 2. Tablets & Mobile (< 1100px): Focused centered layer badge */}
+      {!isDesktop && scrollProgress > 0.2 && scrollProgress < 0.7 && focusedSandwichLayer && (
         <div
           style={{
             position: 'absolute',
-            bottom: '5.5rem',
+            bottom: isMobile ? '5.5rem' : '6.5rem',
             left: '50%',
             transform: 'translateX(-50%)',
-            background: 'rgba(8, 18, 12, 0.92)',
+            background: 'rgba(8, 18, 12, 0.94)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid var(--border-gold)',
             borderRadius: '10px',
-            padding: '0.65rem 1rem',
-            width: 'min(90vw, 340px)',
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.8)',
+            padding: isMobile ? '0.65rem 1rem' : '0.85rem 1.5rem',
+            width: 'min(92vw, 420px)',
+            boxShadow: '0 12px 35px rgba(0, 0, 0, 0.85)',
             zIndex: 25,
             textAlign: 'center',
             transition: 'all 0.3s ease',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--green-light)' }}>
-              LAYER 0{activeLayerIndex + 1} / 07 • {mobileCurrentLayer.tag}
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--green-light)' }}>
+              LAYER 0{activeLayerIndex + 1} / 07 • {focusedSandwichLayer.tag}
             </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--gold-light)' }}>
-              {mobileCurrentLayer.temp}
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--gold-light)' }}>
+              {focusedSandwichLayer.temp}
             </span>
           </div>
-          <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', color: '#ffffff', margin: '0.1rem 0' }}>
-            {mobileCurrentLayer.name}
+          <h4 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? '1.15rem' : '1.35rem', color: '#ffffff', margin: '0.1rem 0' }}>
+            {focusedSandwichLayer.name}
           </h4>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.35 }}>
-            {mobileCurrentLayer.specs}
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.35 }}>
+            {focusedSandwichLayer.specs}
           </p>
         </div>
       )}
@@ -445,7 +453,7 @@ export default function SandwichStory({ onOpenOrderModal }) {
         <div
           style={{
             position: 'absolute',
-            bottom: '4rem',
+            bottom: isMobile ? '4rem' : '5rem',
             left: '50%',
             transform: 'translateX(-50%)',
             background: 'rgba(10, 26, 17, 0.96)',
@@ -459,7 +467,7 @@ export default function SandwichStory({ onOpenOrderModal }) {
             gap: 'clamp(0.6rem, 2vw, 1rem)',
             boxShadow: '0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px var(--gold-glow)',
             zIndex: 30,
-            width: 'min(92vw, 480px)',
+            width: 'min(92vw, 500px)',
             justifyContent: 'space-between',
           }}
         >

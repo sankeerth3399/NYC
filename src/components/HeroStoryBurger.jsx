@@ -18,19 +18,22 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
   const [currentFrame, setCurrentFrame] = useState(1);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [activeCallouts, setActiveCallouts] = useState([]);
-  const [isMobile, setIsMobile] = useState(false);
+  const [viewportWidth, setViewportWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
 
-  // Check viewport width for responsive behavior
+  // Responsive viewport listener
   useEffect(() => {
-    const checkViewport = () => {
-      setIsMobile(window.innerWidth < 768);
+    const handleResize = () => {
+      setViewportWidth(window.innerWidth);
     };
-    checkViewport();
-    window.addEventListener('resize', checkViewport);
-    return () => window.removeEventListener('resize', checkViewport);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Preload frames for smooth 60fps scrubbing
+  const isMobile = viewportWidth < 768;
+  const isTablet = viewportWidth >= 768 && viewportWidth < 1100;
+  const isDesktop = viewportWidth >= 1100;
+
+  // Preload frames for smooth scrubbing
   useEffect(() => {
     let loadedCount = 0;
     const images = [];
@@ -53,7 +56,7 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
     imagesRef.current = images;
   }, []);
 
-  // Draw frame on canvas with aspect cover
+  // Adaptive Canvas Rendering for Perfect Fit on ANY Screen
   const renderFrame = (index) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -69,11 +72,22 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
       const iw = img.naturalWidth;
       const ih = img.naturalHeight;
 
-      const scale = Math.max(cw / iw, ch / ih);
+      const isPortrait = ch > cw;
+      let scale;
+
+      if (isPortrait) {
+        // Mobile & iPad Portrait: Scale so food is fully visible without clipping top/bottom buns
+        scale = Math.min((cw * 1.55) / iw, (ch * 0.80) / ih);
+      } else {
+        // Laptops & Desktops: Scale so it fits comfortably between header & footer HUD
+        scale = Math.min((cw * 1.12) / iw, (ch * 0.84) / ih);
+      }
+
       const nw = iw * scale;
       const nh = ih * scale;
       const cx = (cw - nw) / 2;
-      const cy = (ch - nh) / 2;
+      // Slight upward offset on portrait to avoid bottom scrub bar
+      const cy = isPortrait ? (ch - nh) / 2 - 20 : (ch - nh) / 2;
 
       ctx.clearRect(0, 0, cw, ch);
       ctx.drawImage(img, cx, cy, nw, nh);
@@ -86,8 +100,9 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
     if (!canvas) return;
 
     const updateCanvasSize = () => {
-      canvas.width = window.innerWidth * window.devicePixelRatio;
-      canvas.height = window.innerHeight * window.devicePixelRatio;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
       renderFrame(currentFrame - 1);
     };
 
@@ -108,13 +123,11 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
           const prog = self.progress;
           setScrollProgress(prog);
 
-          // Calculate frame index (0 to 119)
           const targetFrame = Math.round(prog * (TOTAL_FRAMES - 1));
           frameObject.frame = targetFrame;
           setCurrentFrame(targetFrame + 1);
           renderFrame(targetFrame);
 
-          // Layer callouts active between 18% and 65% scroll (Exploded Phase)
           if (prog > 0.18 && prog < 0.65) {
             setActiveCallouts(BURGER_LAYERS);
           } else {
@@ -145,12 +158,12 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
     statusText = 'PERFECTLY ASSEMBLED // READY TO SERVE';
   }
 
-  // Active layer calculation for mobile focused view
+  // Active layer calculation for mobile & tablet focused view
   const activeLayerIndex = Math.min(
     BURGER_LAYERS.length - 1,
     Math.max(0, Math.floor(((scrollProgress - 0.18) / 0.47) * BURGER_LAYERS.length))
   );
-  const mobileCurrentLayer = BURGER_LAYERS[activeLayerIndex];
+  const focusedLayer = BURGER_LAYERS[activeLayerIndex];
 
   const handleScrubClick = (ratio) => {
     const st = ScrollTrigger.getById('hero-burger-st') || ScrollTrigger.getAll()[0];
@@ -174,7 +187,7 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
       className="story-pinned-section"
       style={{ position: 'relative', width: '100%', maxWidth: '100vw', height: '100vh', overflow: 'hidden' }}
     >
-      {/* Background Ambient Glows */}
+      {/* Ambient background glows */}
       <div className="ambient-glow glow-emerald" style={{ top: '10%', left: '15%', width: 'min(500px, 80vw)', height: 'min(500px, 80vw)' }} />
       <div className="ambient-glow glow-gold" style={{ bottom: '15%', right: '15%', width: 'min(450px, 75vw)', height: 'min(450px, 75vw)' }} />
 
@@ -193,12 +206,14 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
         onScrubClick={handleScrubClick}
       />
 
-      {/* Left Lateral Story Telemetry Panel */}
+      {/* Left Lateral Story Telemetry Panel (Desktop & Laptop) */}
       <div
         className="hud-side-panel hud-left-panel"
         style={{
-          opacity: scrollProgress < 0.12 ? 1 : scrollProgress > 0.88 ? 1 : 0.08,
-          pointerEvents: scrollProgress < 0.15 || scrollProgress > 0.85 ? 'auto' : 'none',
+          opacity: scrollProgress < 0.12 ? 1 : scrollProgress > 0.88 ? 1 : 0,
+          pointerEvents: scrollProgress < 0.14 || scrollProgress > 0.86 ? 'auto' : 'none',
+          visibility: scrollProgress >= 0.14 && scrollProgress <= 0.86 ? 'hidden' : 'visible',
+          transition: 'opacity 0.4s ease, visibility 0.4s ease',
         }}
       >
         <p className="hud-tagline">SMASHED TO ORDER // UTICA, NY</p>
@@ -209,7 +224,7 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
           Two fresh 100% beef patties smashed thin at 500°F onto our seasoned flat-top griddle.
           Seared craggy crust, layered American & sharp cheddar melt, house deli sauce.
         </p>
-        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.85rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
           <button
             onClick={() => onOpenOrderModal({ name: 'Double Smashed Cheeseburger w/ Fries', price: 7.99 })}
             className="btn-gold"
@@ -228,53 +243,57 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
         </div>
       </div>
 
-      {/* Right Lateral Specs Table (Desktop) */}
-      <div
-        className="hud-side-panel hud-right-panel"
-        style={{
-          opacity: scrollProgress < 0.15 ? 1 : scrollProgress > 0.85 ? 1 : 0.08,
-          pointerEvents: scrollProgress < 0.15 || scrollProgress > 0.85 ? 'auto' : 'none',
-        }}
-      >
-        <p className="hud-tagline">CRAFT METRICS</p>
-        <table className="hud-data-table">
-          <tbody>
-            <tr>
-              <td>FLAT-TOP TEMP</td>
-              <td>260°C / 500°F</td>
-            </tr>
-            <tr>
-              <td>BEEF BLEND</td>
-              <td>FRESH CHUCK 80/20</td>
-            </tr>
-            <tr>
-              <td>PATTIES</td>
-              <td>DOUBLE SMASH</td>
-            </tr>
-            <tr>
-              <td>CHEESE</td>
-              <td>MELTED AMERICAN & CHEDDAR</td>
-            </tr>
-            <tr>
-              <td>BUN</td>
-              <td>TOASTED BRIOCHE</td>
-            </tr>
-            <tr>
-              <td>SERVED WITH</td>
-              <td>CRINKLE CUT FRIES</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      {/* Right Lateral Specs Table (Desktop >= 1200px only) */}
+      {isDesktop && (
+        <div
+          className="hud-side-panel hud-right-panel"
+          style={{
+            opacity: scrollProgress < 0.14 ? 1 : scrollProgress > 0.86 ? 1 : 0,
+            pointerEvents: scrollProgress < 0.14 || scrollProgress > 0.86 ? 'auto' : 'none',
+            visibility: scrollProgress >= 0.14 && scrollProgress <= 0.86 ? 'hidden' : 'visible',
+            transition: 'opacity 0.4s ease, visibility 0.4s ease',
+          }}
+        >
+          <p className="hud-tagline">CRAFT METRICS</p>
+          <table className="hud-data-table">
+            <tbody>
+              <tr>
+                <td>FLAT-TOP TEMP</td>
+                <td>260°C / 500°F</td>
+              </tr>
+              <tr>
+                <td>BEEF BLEND</td>
+                <td>FRESH CHUCK 80/20</td>
+              </tr>
+              <tr>
+                <td>PATTIES</td>
+                <td>DOUBLE SMASH</td>
+              </tr>
+              <tr>
+                <td>CHEESE</td>
+                <td>MELTED AMERICAN & CHEDDAR</td>
+              </tr>
+              <tr>
+                <td>BUN</td>
+                <td>TOASTED BRIOCHE</td>
+              </tr>
+              <tr>
+                <td>SERVED WITH</td>
+                <td>CRINKLE CUT FRIES</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Ingredient Callouts */}
-      {/* 1. Desktop & Tablet View (>= 768px): Full 7-card lateral exploded layout */}
-      {!isMobile && (
+      {/* 1. Large Desktops (>= 1100px): Lateral floating callouts */}
+      {isDesktop && (
         <div className="ingredient-callout-container">
           {BURGER_LAYERS.map((layer, idx) => {
             const isLeft = layer.side === 'left';
-            const topPercent = 20 + idx * 9.5;
-            const leftPercent = isLeft ? 10 : 70;
+            const topPercent = 18 + idx * 10;
+            const leftPercent = isLeft ? 8 : 72;
 
             return (
               <div
@@ -296,40 +315,40 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
         </div>
       )}
 
-      {/* 2. Mobile View (< 768px): Focused, centered card that tracks the active exploded layer */}
-      {isMobile && scrollProgress > 0.18 && scrollProgress < 0.65 && mobileCurrentLayer && (
+      {/* 2. Tablets & Mobile (< 1100px): Clean centered active layer badge */}
+      {!isDesktop && scrollProgress > 0.18 && scrollProgress < 0.65 && focusedLayer && (
         <div
           style={{
             position: 'absolute',
-            bottom: '5.5rem',
+            bottom: isMobile ? '5.5rem' : '6.5rem',
             left: '50%',
             transform: 'translateX(-50%)',
-            background: 'rgba(8, 18, 12, 0.92)',
+            background: 'rgba(8, 18, 12, 0.94)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid var(--border-green)',
             borderRadius: '10px',
-            padding: '0.65rem 1rem',
-            width: 'min(90vw, 340px)',
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.8)',
+            padding: isMobile ? '0.65rem 1rem' : '0.85rem 1.5rem',
+            width: 'min(92vw, 420px)',
+            boxShadow: '0 12px 35px rgba(0, 0, 0, 0.85)',
             zIndex: 25,
             textAlign: 'center',
             transition: 'all 0.3s ease',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--gold-light)' }}>
-              LAYER 0{activeLayerIndex + 1} / 07 • {mobileCurrentLayer.tag}
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--gold-light)' }}>
+              LAYER 0{activeLayerIndex + 1} / 07 • {focusedLayer.tag}
             </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--green-light)' }}>
-              {mobileCurrentLayer.temp}
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--green-light)' }}>
+              {focusedLayer.temp}
             </span>
           </div>
-          <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', color: '#ffffff', margin: '0.1rem 0' }}>
-            {mobileCurrentLayer.name}
+          <h4 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? '1.15rem' : '1.35rem', color: '#ffffff', margin: '0.1rem 0' }}>
+            {focusedLayer.name}
           </h4>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.35 }}>
-            {mobileCurrentLayer.specs}
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.35 }}>
+            {focusedLayer.specs}
           </p>
         </div>
       )}
@@ -345,12 +364,12 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
         <span>SCROLL TO UNPACK</span>
       </div>
 
-      {/* Final Reassembled Lock Badge (At scroll > 90%) */}
+      {/* Final Reassembled Lock Badge */}
       {scrollProgress >= 0.9 && (
         <div
           style={{
             position: 'absolute',
-            bottom: '5.5rem',
+            bottom: isMobile ? '5.5rem' : '6.5rem',
             left: '50%',
             transform: 'translateX(-50%)',
             background: 'rgba(10, 26, 17, 0.96)',
@@ -364,7 +383,7 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
             gap: 'clamp(0.6rem, 2vw, 1rem)',
             boxShadow: '0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px var(--green-glow)',
             zIndex: 30,
-            width: 'min(92vw, 480px)',
+            width: 'min(92vw, 500px)',
             justifyContent: 'space-between',
           }}
         >
