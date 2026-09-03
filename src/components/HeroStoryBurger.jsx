@@ -3,11 +3,12 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import HudOverlay from './HudOverlay';
 import { BURGER_LAYERS } from '../data/ingredientsData';
-import { Sparkles, CheckCircle2, ChevronDown } from 'lucide-react';
+import { Sparkles, CheckCircle2, ChevronDown, MessageSquare } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const TOTAL_FRAMES = 120;
+const OWNER_WHATSAPP_NUMBER = '13158643000';
 
 export default function HeroStoryBurger({ onOpenOrderModal }) {
   const containerRef = useRef(null);
@@ -17,6 +18,17 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
   const [currentFrame, setCurrentFrame] = useState(1);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [activeCallouts, setActiveCallouts] = useState([]);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check viewport width for responsive behavior
+  useEffect(() => {
+    const checkViewport = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkViewport();
+    window.addEventListener('resize', checkViewport);
+    return () => window.removeEventListener('resize', checkViewport);
+  }, []);
 
   // Preload frames for smooth 60fps scrubbing
   useEffect(() => {
@@ -86,6 +98,7 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
 
     const ctx = gsap.context(() => {
       ScrollTrigger.create({
+        id: 'hero-burger-st',
         trigger: containerRef.current,
         start: 'top top',
         end: '+=280%',
@@ -111,7 +124,6 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
       });
     }, containerRef);
 
-    // Initial draw
     const initTimer = setTimeout(() => {
       renderFrame(0);
     }, 150);
@@ -133,6 +145,13 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
     statusText = 'PERFECTLY ASSEMBLED // READY TO SERVE';
   }
 
+  // Active layer calculation for mobile focused view
+  const activeLayerIndex = Math.min(
+    BURGER_LAYERS.length - 1,
+    Math.max(0, Math.floor(((scrollProgress - 0.18) / 0.47) * BURGER_LAYERS.length))
+  );
+  const mobileCurrentLayer = BURGER_LAYERS[activeLayerIndex];
+
   const handleScrubClick = (ratio) => {
     const st = ScrollTrigger.getById('hero-burger-st') || ScrollTrigger.getAll()[0];
     if (st) {
@@ -141,16 +160,23 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
     }
   };
 
+  const handleWhatsAppQuickOrder = () => {
+    const text = encodeURIComponent(
+      `🍔 *ORDER INQUIRY — MEKO DOUBLE SMASH*\n\nHi Meko Deli! I would like to order:\n• 1x Double Smashed Cheeseburger w/ Fries ($7.99)\n\nPlease let me know the preparation time!`
+    );
+    window.open(`https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${text}`, '_blank');
+  };
+
   return (
     <section
       id="hero-burger"
       ref={containerRef}
       className="story-pinned-section"
-      style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}
+      style={{ position: 'relative', width: '100%', maxWidth: '100vw', height: '100vh', overflow: 'hidden' }}
     >
       {/* Background Ambient Glows */}
-      <div className="ambient-glow glow-emerald" style={{ top: '10%', left: '15%', width: '500px', height: '500px' }} />
-      <div className="ambient-glow glow-gold" style={{ bottom: '15%', right: '15%', width: '450px', height: '450px' }} />
+      <div className="ambient-glow glow-emerald" style={{ top: '10%', left: '15%', width: 'min(500px, 80vw)', height: 'min(500px, 80vw)' }} />
+      <div className="ambient-glow glow-gold" style={{ bottom: '15%', right: '15%', width: 'min(450px, 75vw)', height: 'min(450px, 75vw)' }} />
 
       {/* Main Food Canvas */}
       <div className="canvas-story-container">
@@ -167,7 +193,7 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
         onScrubClick={handleScrubClick}
       />
 
-      {/* Left Lateral Story Telemetry Panel (Fades out when exploded to avoid clutter) */}
+      {/* Left Lateral Story Telemetry Panel */}
       <div
         className="hud-side-panel hud-left-panel"
         style={{
@@ -183,14 +209,26 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
           Two fresh 100% beef patties smashed thin at 500°F onto our seasoned flat-top griddle.
           Seared craggy crust, layered American & sharp cheddar melt, house deli sauce.
         </p>
-        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem' }}>
-          <button onClick={onOpenOrderModal} className="btn-gold" style={{ padding: '0.65rem 1.25rem', fontSize: '0.85rem' }}>
-            Order This Burger — $7.99
+        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.85rem', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => onOpenOrderModal({ name: 'Double Smashed Cheeseburger w/ Fries', price: 7.99 })}
+            className="btn-gold"
+            style={{ padding: '0.6rem 1.15rem', fontSize: '0.85rem' }}
+          >
+            Order — $7.99
+          </button>
+          <button
+            onClick={handleWhatsAppQuickOrder}
+            className="btn-whatsapp"
+            style={{ padding: '0.6rem 1.15rem', fontSize: '0.85rem' }}
+          >
+            <MessageSquare size={15} />
+            WhatsApp
           </button>
         </div>
       </div>
 
-      {/* Right Lateral Specs Table (Initial state) */}
+      {/* Right Lateral Specs Table (Desktop) */}
       <div
         className="hud-side-panel hud-right-panel"
         style={{
@@ -229,32 +267,72 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
         </table>
       </div>
 
-      {/* Floating Ingredient Callouts (During Physical Exploded Separation) */}
-      <div className="ingredient-callout-container">
-        {BURGER_LAYERS.map((layer, idx) => {
-          const isLeft = layer.side === 'left';
-          // Calculate positions spaced vertically around the center
-          const topPercent = 22 + idx * 9;
-          const leftPercent = isLeft ? 12 : 68;
+      {/* Ingredient Callouts */}
+      {/* 1. Desktop & Tablet View (>= 768px): Full 7-card lateral exploded layout */}
+      {!isMobile && (
+        <div className="ingredient-callout-container">
+          {BURGER_LAYERS.map((layer, idx) => {
+            const isLeft = layer.side === 'left';
+            const topPercent = 20 + idx * 9.5;
+            const leftPercent = isLeft ? 10 : 70;
 
-          return (
-            <div
-              key={layer.id}
-              className={`ingredient-callout ${activeCallouts.length > 0 ? 'active' : ''}`}
-              style={{
-                top: `${topPercent}%`,
-                left: `${leftPercent}%`,
-                transitionDelay: `${idx * 0.04}s`,
-              }}
-            >
-              <span className="callout-tag">{layer.tag}</span>
-              <h3 className="callout-name">{layer.name}</h3>
-              <p className="callout-specs">{layer.specs}</p>
-              <span className="callout-temp">{layer.temp}</span>
-            </div>
-          );
-        })}
-      </div>
+            return (
+              <div
+                key={layer.id}
+                className={`ingredient-callout ${activeCallouts.length > 0 ? 'active' : ''}`}
+                style={{
+                  top: `${topPercent}%`,
+                  left: `${leftPercent}%`,
+                  transitionDelay: `${idx * 0.03}s`,
+                }}
+              >
+                <span className="callout-tag">{layer.tag}</span>
+                <h3 className="callout-name">{layer.name}</h3>
+                <p className="callout-specs">{layer.specs}</p>
+                <span className="callout-temp">{layer.temp}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 2. Mobile View (< 768px): Focused, centered card that tracks the active exploded layer */}
+      {isMobile && scrollProgress > 0.18 && scrollProgress < 0.65 && mobileCurrentLayer && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '5.5rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'rgba(8, 18, 12, 0.92)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid var(--border-green)',
+            borderRadius: '10px',
+            padding: '0.65rem 1rem',
+            width: 'min(90vw, 340px)',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.8)',
+            zIndex: 25,
+            textAlign: 'center',
+            transition: 'all 0.3s ease',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--gold-light)' }}>
+              LAYER 0{activeLayerIndex + 1} / 07 • {mobileCurrentLayer.tag}
+            </span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--green-light)' }}>
+              {mobileCurrentLayer.temp}
+            </span>
+          </div>
+          <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', color: '#ffffff', margin: '0.1rem 0' }}>
+            {mobileCurrentLayer.name}
+          </h4>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.35 }}>
+            {mobileCurrentLayer.specs}
+          </p>
+        </div>
+      )}
 
       {/* Initial Scroll Prompt */}
       <div
@@ -272,39 +350,53 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
         <div
           style={{
             position: 'absolute',
-            bottom: '6.5rem',
+            bottom: '5.5rem',
             left: '50%',
             transform: 'translateX(-50%)',
-            background: 'rgba(10, 26, 17, 0.95)',
+            background: 'rgba(10, 26, 17, 0.96)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid var(--green-bright)',
-            padding: '0.85rem 1.75rem',
-            borderRadius: '8px',
+            padding: 'clamp(0.6rem, 2vw, 0.85rem) clamp(1rem, 3vw, 1.75rem)',
+            borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
-            gap: '1rem',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px var(--green-glow)',
+            gap: 'clamp(0.6rem, 2vw, 1rem)',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px var(--green-glow)',
             zIndex: 30,
-            animation: 'fadeInUp 0.4s ease forwards',
+            width: 'min(92vw, 480px)',
+            justifyContent: 'space-between',
           }}
         >
-          <CheckCircle2 color="var(--green-bright)" size={24} />
-          <div>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--green-light)', margin: 0 }}>
-              ASSEMBLY COMPLETE
-            </p>
-            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: '#ffffff', margin: 0 }}>
-              ONE PERFECT SMASHED BURGER
-            </h4>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <CheckCircle2 color="var(--green-bright)" size={22} style={{ flexShrink: 0 }} />
+            <div>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--green-light)', margin: 0 }}>
+                ASSEMBLY LOCKED
+              </p>
+              <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1rem, 2.5vw, 1.25rem)', color: '#ffffff', margin: 0 }}>
+                ONE PERFECT BURGER
+              </h4>
+            </div>
           </div>
-          <button
-            onClick={onOpenOrderModal}
-            className="btn-gold"
-            style={{ padding: '0.45rem 1rem', fontSize: '0.8rem', marginLeft: '0.5rem' }}
-          >
-            Order Now
-          </button>
+          <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+            <button
+              onClick={handleWhatsAppQuickOrder}
+              className="btn-whatsapp"
+              style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}
+              title="Order on WhatsApp"
+            >
+              <MessageSquare size={14} />
+              WhatsApp
+            </button>
+            <button
+              onClick={() => onOpenOrderModal({ name: 'Double Smashed Cheeseburger w/ Fries', price: 7.99 })}
+              className="btn-gold"
+              style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}
+            >
+              Order
+            </button>
+          </div>
         </div>
       )}
     </section>

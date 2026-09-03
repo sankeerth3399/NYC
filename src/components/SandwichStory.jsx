@@ -2,9 +2,11 @@ import React, { useRef, useEffect, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SANDWICH_LAYERS } from '../data/ingredientsData';
-import { Sparkles, CheckCircle2, Flame } from 'lucide-react';
+import { Sparkles, CheckCircle2, Flame, MessageSquare } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
+
+const OWNER_WHATSAPP_NUMBER = '13158643000';
 
 export default function SandwichStory({ onOpenOrderModal }) {
   const sectionRef = useRef(null);
@@ -13,11 +15,22 @@ export default function SandwichStory({ onOpenOrderModal }) {
   const assembledImgRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [calloutsActive, setCalloutsActive] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkViewport = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkViewport();
+    window.addEventListener('resize', checkViewport);
+    return () => window.removeEventListener('resize', checkViewport);
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
         scrollTrigger: {
+          id: 'sandwich-st',
           trigger: sectionRef.current,
           start: 'top top',
           end: '+=260%',
@@ -31,67 +44,83 @@ export default function SandwichStory({ onOpenOrderModal }) {
         },
       });
 
-      // Phase 1 (0 to 0.45): Explode apart
-      // Phase 2 (0.45 to 0.65): Hover separated with parallax
-      // Phase 3 (0.65 to 1.0): Reassemble smoothly
-
       // Assembled sandwich fades out as exploded layers separate
-      tl.to(assembledImgRef.current, {
-        opacity: 0,
-        scale: 0.95,
-        duration: 0.3,
-        ease: 'power2.inOut',
-      }, 0);
+      tl.to(
+        assembledImgRef.current,
+        {
+          opacity: 0,
+          scale: 0.95,
+          duration: 0.3,
+          ease: 'power2.inOut',
+        },
+        0
+      );
 
       // Separate each individual layer with 3D depth and offsets
       layersRef.current.forEach((el, idx) => {
         if (!el) return;
         const layerData = SANDWICH_LAYERS[idx];
-        const yTarget = layerData.yOffset;
+        const multiplier = isMobile ? 0.75 : 1;
+        const yTarget = layerData.yOffset * multiplier;
         const rot = layerData.rotate;
 
         // Step 1: Explode outwards
-        tl.to(el, {
-          y: yTarget,
-          rotateX: idx < 3 ? 16 : idx > 3 ? -16 : 0,
-          rotateZ: rot,
-          scale: 1 + Math.abs(idx - 3) * 0.02,
-          opacity: 1,
-          duration: 0.5,
-          ease: 'power2.out',
-        }, 0.05);
+        tl.to(
+          el,
+          {
+            y: yTarget,
+            rotateX: idx < 3 ? 14 : idx > 3 ? -14 : 0,
+            rotateZ: rot,
+            scale: 1 + Math.abs(idx - 3) * 0.015,
+            opacity: 1,
+            duration: 0.5,
+            ease: 'power2.out',
+          },
+          0.05
+        );
 
-        // Step 2: Hover hold
-        tl.to(el, {
-          y: yTarget + (idx % 2 === 0 ? 8 : -8),
-          duration: 0.2,
-          ease: 'sine.inOut',
-        }, 0.55);
+        // Step 2: Hover hold with micro-drift
+        tl.to(
+          el,
+          {
+            y: yTarget + (idx % 2 === 0 ? 6 : -6),
+            duration: 0.2,
+            ease: 'sine.inOut',
+          },
+          0.55
+        );
 
         // Step 3: Reassemble into single sandwich
-        tl.to(el, {
-          y: 0,
-          rotateX: 0,
-          rotateZ: 0,
-          scale: 1,
-          opacity: idx === 0 || idx === 6 ? 0.3 : 0, // gently fade as assembled image takes over
-          duration: 0.35,
-          ease: 'power2.inOut',
-        }, 0.75);
+        tl.to(
+          el,
+          {
+            y: 0,
+            rotateX: 0,
+            rotateZ: 0,
+            scale: 1,
+            opacity: idx === 0 || idx === 6 ? 0.3 : 0,
+            duration: 0.35,
+            ease: 'power2.inOut',
+          },
+          0.75
+        );
       });
 
       // Assembled sandwich fades back in to complete the reassembly
-      tl.to(assembledImgRef.current, {
-        opacity: 1,
-        scale: 1,
-        duration: 0.3,
-        ease: 'power2.out',
-      }, 0.75);
-
+      tl.to(
+        assembledImgRef.current,
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.3,
+          ease: 'power2.out',
+        },
+        0.75
+      );
     }, sectionRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [isMobile]);
 
   let statusText = 'SCROLL TO EXPLODE DELI HERO';
   if (scrollProgress > 0.2 && scrollProgress < 0.7) {
@@ -102,6 +131,20 @@ export default function SandwichStory({ onOpenOrderModal }) {
     statusText = 'REASSEMBLED // READY FOR THE GRILL';
   }
 
+  // Active layer calculation for mobile focused view
+  const activeLayerIndex = Math.min(
+    SANDWICH_LAYERS.length - 1,
+    Math.max(0, Math.floor(((scrollProgress - 0.2) / 0.5) * SANDWICH_LAYERS.length))
+  );
+  const mobileCurrentLayer = SANDWICH_LAYERS[activeLayerIndex];
+
+  const handleWhatsAppHeroOrder = () => {
+    const text = encodeURIComponent(
+      `🥪 *ORDER INQUIRY — UTICA CHOPPED CHEESE HERO*\n\nHi Meko Deli! I would like to order:\n• 1x The Famous Utica Chopped Cheese ($7.49)\n\nPlease let me know when it will be ready!`
+    );
+    window.open(`https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${text}`, '_blank');
+  };
+
   return (
     <section
       id="sandwich-story"
@@ -109,52 +152,55 @@ export default function SandwichStory({ onOpenOrderModal }) {
       className="story-pinned-section"
       style={{
         position: 'relative',
-        width: '100vw',
+        width: '100%',
+        maxWidth: '100vw',
         height: '100vh',
         overflow: 'hidden',
         background: 'radial-gradient(ellipse at center, #092114 0%, #060b08 75%)',
       }}
     >
       {/* Ambient background glows */}
-      <div className="ambient-glow glow-gold" style={{ top: '20%', right: '20%', width: '450px', height: '450px' }} />
-      <div className="ambient-glow glow-emerald" style={{ bottom: '10%', left: '15%', width: '550px', height: '550px' }} />
+      <div className="ambient-glow glow-gold" style={{ top: '20%', right: '20%', width: 'min(450px, 75vw)', height: 'min(450px, 75vw)' }} />
+      <div className="ambient-glow glow-emerald" style={{ bottom: '10%', left: '15%', width: 'min(550px, 80vw)', height: 'min(550px, 80vw)' }} />
 
       {/* Top HUD Telemetry */}
       <div
         style={{
           position: 'absolute',
-          top: '5.5rem',
-          left: '2rem',
-          right: '2rem',
+          top: '5.25rem',
+          left: 'clamp(1rem, 3vw, 2rem)',
+          right: 'clamp(1rem, 3vw, 2rem)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           pointerEvents: 'none',
           zIndex: 20,
+          gap: '0.5rem',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           <span
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.4rem',
+              gap: '0.35rem',
               fontFamily: 'var(--font-mono)',
-              fontSize: '0.75rem',
+              fontSize: 'clamp(0.68rem, 1.2vw, 0.75rem)',
               color: 'var(--gold-light)',
               background: 'rgba(245, 158, 11, 0.15)',
-              padding: '0.25rem 0.65rem',
+              padding: '0.2rem 0.6rem',
               borderRadius: '4px',
               border: '1px solid var(--border-gold)',
+              whiteSpace: 'nowrap',
             }}
           >
-            <Flame size={14} />
+            <Flame size={13} />
             HOT DELI HERO CRAFT
           </span>
           <span
             style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: '0.75rem',
+              fontSize: '0.72rem',
               color: 'var(--text-secondary)',
               display: 'none',
             }}
@@ -167,19 +213,20 @@ export default function SandwichStory({ onOpenOrderModal }) {
         <div
           style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: '0.75rem',
+            fontSize: 'clamp(0.65rem, 1.2vw, 0.75rem)',
             color: 'var(--green-bright)',
-            background: 'rgba(6, 11, 8, 0.6)',
-            padding: '0.25rem 0.65rem',
+            background: 'rgba(6, 11, 8, 0.7)',
+            padding: '0.2rem 0.6rem',
             borderRadius: '4px',
             border: '1px solid var(--border-subtle)',
+            whiteSpace: 'nowrap',
           }}
         >
           {statusText}
         </div>
       </div>
 
-      {/* Left Text Intro (Initial and Reassembled State) */}
+      {/* Left Text Intro Panel */}
       <div
         className="hud-side-panel hud-left-panel"
         style={{
@@ -196,13 +243,23 @@ export default function SandwichStory({ onOpenOrderModal }) {
           Slow-griddled Boar’s Head spiced pastrami chopped with seasoned ribeye beef, caramelized sweet onions,
           melted Swiss & provolone on a toasted Utica sesame hero roll.
         </p>
-        <button
-          onClick={onOpenOrderModal}
-          className="btn-gold"
-          style={{ padding: '0.65rem 1.25rem', fontSize: '0.85rem' }}
-        >
-          Order This Hero — $7.49
-        </button>
+        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.85rem', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => onOpenOrderModal({ name: 'The Famous Utica Chopped Cheese', price: 7.49 })}
+            className="btn-gold"
+            style={{ padding: '0.6rem 1.15rem', fontSize: '0.85rem' }}
+          >
+            Order Hero — $7.49
+          </button>
+          <button
+            onClick={handleWhatsAppHeroOrder}
+            className="btn-whatsapp"
+            style={{ padding: '0.6rem 1.15rem', fontSize: '0.85rem' }}
+          >
+            <MessageSquare size={15} />
+            WhatsApp
+          </button>
+        </div>
       </div>
 
       {/* Center 3D Sandwich Composition Stage */}
@@ -225,8 +282,8 @@ export default function SandwichStory({ onOpenOrderModal }) {
               src="/assets/sandwich/sandwich_assembled.jpg"
               alt="Meko Deli Assembled Chopped Cheese Hero"
               style={{
-                maxWidth: '90%',
-                maxHeight: '85%',
+                maxWidth: '92%',
+                maxHeight: '88%',
                 objectFit: 'contain',
                 borderRadius: '8px',
                 boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(245, 158, 11, 0.25)',
@@ -234,7 +291,7 @@ export default function SandwichStory({ onOpenOrderModal }) {
             />
           </div>
 
-          {/* Exploded Individual Layers (Separates upon scroll) */}
+          {/* Exploded Individual Layers */}
           {SANDWICH_LAYERS.map((layer, idx) => (
             <div
               key={layer.id}
@@ -246,43 +303,35 @@ export default function SandwichStory({ onOpenOrderModal }) {
               }}
             >
               <div
+                className="sandwich-layer-content"
                 style={{
-                  position: 'relative',
-                  width: '85%',
-                  height: '60px',
-                  borderRadius: '12px',
                   background:
                     idx === 0
-                      ? 'linear-gradient(180deg, #d97706, #b45309)' // Top bun crust
+                      ? 'linear-gradient(180deg, #d97706, #b45309)'
                       : idx === 1
-                      ? 'linear-gradient(180deg, #f59e0b, #eab308)' // Mustard / Aioli
+                      ? 'linear-gradient(180deg, #f59e0b, #eab308)'
                       : idx === 2
-                      ? 'linear-gradient(180deg, #fef08a, #fde047)' // Melted Swiss/Provolone
+                      ? 'linear-gradient(180deg, #fef08a, #fde047)'
                       : idx === 3
-                      ? 'linear-gradient(180deg, #7f1d1d, #450a0a)' // Pastrami & Steak
+                      ? 'linear-gradient(180deg, #7f1d1d, #450a0a)'
                       : idx === 4
-                      ? 'linear-gradient(180deg, #65a30d, #4d7c0f)' // Pickles & Onions
+                      ? 'linear-gradient(180deg, #65a30d, #4d7c0f)'
                       : idx === 5
-                      ? 'linear-gradient(180deg, #16a34a, #15803d)' // Shredded Lettuce
-                      : 'linear-gradient(180deg, #92400e, #78350f)', // Bottom Bread
-                  boxShadow: '0 12px 25px rgba(0, 0, 0, 0.8), inset 0 2px 4px rgba(255, 255, 255, 0.4)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0 1.5rem',
-                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                      ? 'linear-gradient(180deg, #16a34a, #15803d)'
+                      : 'linear-gradient(180deg, #92400e, #78350f)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                   <span
                     style={{
                       fontFamily: 'var(--font-mono)',
-                      fontSize: '0.7rem',
+                      fontSize: '0.68rem',
                       fontWeight: 700,
                       color: '#ffffff',
                       background: 'rgba(0, 0, 0, 0.4)',
-                      padding: '0.15rem 0.5rem',
+                      padding: '0.15rem 0.45rem',
                       borderRadius: '3px',
+                      flexShrink: 0,
                     }}
                   >
                     0{idx + 1}
@@ -290,10 +339,11 @@ export default function SandwichStory({ onOpenOrderModal }) {
                   <span
                     style={{
                       fontFamily: 'var(--font-display)',
-                      fontSize: '1.25rem',
+                      fontSize: 'clamp(0.9rem, 1.8vw, 1.25rem)',
                       fontWeight: 700,
                       color: '#ffffff',
                       textShadow: '0 2px 4px rgba(0, 0, 0, 0.6)',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {layer.name}
@@ -302,11 +352,13 @@ export default function SandwichStory({ onOpenOrderModal }) {
                 <span
                   style={{
                     fontFamily: 'var(--font-mono)',
-                    fontSize: '0.72rem',
+                    fontSize: '0.68rem',
                     color: 'rgba(255, 255, 255, 0.9)',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    padding: '0.2rem 0.6rem',
+                    background: 'rgba(0, 0, 0, 0.35)',
+                    padding: '0.15rem 0.5rem',
                     borderRadius: '4px',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
                   }}
                 >
                   {layer.tag}
@@ -317,36 +369,76 @@ export default function SandwichStory({ onOpenOrderModal }) {
         </div>
       </div>
 
-      {/* Floating Callouts for Sandwich Layers (Active during exploded scroll) */}
-      <div className="ingredient-callout-container">
-        {SANDWICH_LAYERS.map((layer, idx) => {
-          const isLeft = layer.side === 'left';
-          const topPercent = 20 + idx * 10;
-          const leftPercent = isLeft ? 10 : 70;
+      {/* 1. Desktop Floating Callouts (>= 768px) */}
+      {!isMobile && (
+        <div className="ingredient-callout-container">
+          {SANDWICH_LAYERS.map((layer, idx) => {
+            const isLeft = layer.side === 'left';
+            const topPercent = 20 + idx * 9.5;
+            const leftPercent = isLeft ? 10 : 70;
 
-          return (
-            <div
-              key={layer.id}
-              className={`ingredient-callout ${calloutsActive ? 'active' : ''}`}
-              style={{
-                top: `${topPercent}%`,
-                left: `${leftPercent}%`,
-                transitionDelay: `${idx * 0.05}s`,
-                border: '1px solid var(--border-gold)',
-              }}
-            >
-              <span className="callout-tag" style={{ color: 'var(--green-light)' }}>
-                {layer.tag}
-              </span>
-              <h3 className="callout-name">{layer.name}</h3>
-              <p className="callout-specs">{layer.specs}</p>
-              <span className="callout-temp" style={{ background: 'rgba(245, 158, 11, 0.2)', color: 'var(--gold-light)' }}>
-                {layer.temp}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+            return (
+              <div
+                key={layer.id}
+                className={`ingredient-callout ${calloutsActive ? 'active' : ''}`}
+                style={{
+                  top: `${topPercent}%`,
+                  left: `${leftPercent}%`,
+                  transitionDelay: `${idx * 0.04}s`,
+                  border: '1px solid var(--border-gold)',
+                }}
+              >
+                <span className="callout-tag" style={{ color: 'var(--green-light)' }}>
+                  {layer.tag}
+                </span>
+                <h3 className="callout-name">{layer.name}</h3>
+                <p className="callout-specs">{layer.specs}</p>
+                <span className="callout-temp" style={{ background: 'rgba(245, 158, 11, 0.2)', color: 'var(--gold-light)' }}>
+                  {layer.temp}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 2. Mobile Focused Callout (< 768px) */}
+      {isMobile && scrollProgress > 0.2 && scrollProgress < 0.7 && mobileCurrentLayer && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '5.5rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'rgba(8, 18, 12, 0.92)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid var(--border-gold)',
+            borderRadius: '10px',
+            padding: '0.65rem 1rem',
+            width: 'min(90vw, 340px)',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.8)',
+            zIndex: 25,
+            textAlign: 'center',
+            transition: 'all 0.3s ease',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--green-light)' }}>
+              LAYER 0{activeLayerIndex + 1} / 07 • {mobileCurrentLayer.tag}
+            </span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--gold-light)' }}>
+              {mobileCurrentLayer.temp}
+            </span>
+          </div>
+          <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', color: '#ffffff', margin: '0.1rem 0' }}>
+            {mobileCurrentLayer.name}
+          </h4>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.35 }}>
+            {mobileCurrentLayer.specs}
+          </p>
+        </div>
+      )}
 
       {/* Reassembled Locked Toast Badge */}
       {scrollProgress >= 0.9 && (
@@ -356,36 +448,50 @@ export default function SandwichStory({ onOpenOrderModal }) {
             bottom: '4rem',
             left: '50%',
             transform: 'translateX(-50%)',
-            background: 'rgba(10, 26, 17, 0.95)',
+            background: 'rgba(10, 26, 17, 0.96)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid var(--gold-light)',
-            padding: '0.85rem 1.75rem',
-            borderRadius: '8px',
+            padding: 'clamp(0.6rem, 2vw, 0.85rem) clamp(1rem, 3vw, 1.75rem)',
+            borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
-            gap: '1rem',
+            gap: 'clamp(0.6rem, 2vw, 1rem)',
             boxShadow: '0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px var(--gold-glow)',
             zIndex: 30,
-            animation: 'fadeInUp 0.4s ease forwards',
+            width: 'min(92vw, 480px)',
+            justifyContent: 'space-between',
           }}
         >
-          <CheckCircle2 color="var(--gold-light)" size={24} />
-          <div>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--gold-light)', margin: 0 }}>
-              REASSEMBLY LOCKED
-            </p>
-            <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: '#ffffff', margin: 0 }}>
-              THE PERFECT UTICA CHOPPED CHEESE HERO
-            </h4>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <CheckCircle2 color="var(--gold-light)" size={22} style={{ flexShrink: 0 }} />
+            <div>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--gold-light)', margin: 0 }}>
+                REASSEMBLY LOCKED
+              </p>
+              <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1rem, 2.5vw, 1.25rem)', color: '#ffffff', margin: 0 }}>
+                THE UTICA CHOPPED CHEESE
+              </h4>
+            </div>
           </div>
-          <button
-            onClick={onOpenOrderModal}
-            className="btn-primary"
-            style={{ padding: '0.45rem 1rem', fontSize: '0.8rem', marginLeft: '0.5rem' }}
-          >
-            Order Hero
-          </button>
+          <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+            <button
+              onClick={handleWhatsAppHeroOrder}
+              className="btn-whatsapp"
+              style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}
+              title="Order on WhatsApp"
+            >
+              <MessageSquare size={14} />
+              WhatsApp
+            </button>
+            <button
+              onClick={() => onOpenOrderModal({ name: 'The Famous Utica Chopped Cheese', price: 7.49 })}
+              className="btn-gold"
+              style={{ padding: '0.45rem 0.8rem', fontSize: '0.78rem' }}
+            >
+              Order
+            </button>
+          </div>
         </div>
       )}
 
@@ -409,6 +515,12 @@ export default function SandwichStory({ onOpenOrderModal }) {
           }}
         />
       </div>
+
+      <style>{`
+        @media (min-width: 768px) {
+          .d-md-inline { display: inline-block !important; }
+        }
+      `}</style>
     </section>
   );
 }

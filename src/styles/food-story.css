@@ -1,7 +1,8 @@
 /* Pinned Story Stages */
 .story-pinned-section {
   position: relative;
-  width: 100vw;
+  width: 100%;
+  max-width: 100vw;
   height: 100vh;
   overflow: hidden;
   background-color: var(--bg-black);
@@ -33,12 +34,14 @@
 .hud-layer {
   position: absolute;
   inset: 0;
+  width: 100%;
+  max-width: 100vw;
   pointer-events: none;
   z-index: 10;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 5.5rem 2rem 1.5rem 2rem;
+  padding: 5.5rem 1.5rem 1.5rem 1.5rem;
 }
 
 /* Corner Frame Brackets */
@@ -60,6 +63,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  gap: 0.75rem;
 }
 
 .hud-rec-badge {
@@ -67,35 +71,38 @@
   align-items: center;
   gap: 0.5rem;
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   color: #ffffff;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 0.35rem 0.75rem;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 0.35rem 0.65rem;
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
 }
 
 .rec-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background-color: var(--red-rec);
   box-shadow: 0 0 10px var(--red-glow);
+  flex-shrink: 0;
 }
 
 .hud-specs-badge {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.85rem;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--text-secondary);
-  background: rgba(0, 0, 0, 0.4);
-  padding: 0.35rem 0.85rem;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 0.35rem 0.75rem;
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
 }
 
 /* Center Crosshair Reticle */
@@ -104,8 +111,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 180px;
-  height: 180px;
+  width: 160px;
+  height: 160px;
   pointer-events: none;
   display: flex;
   align-items: center;
@@ -122,17 +129,17 @@
 }
 
 .hud-crosshair::before {
-  width: 30px;
+  width: 26px;
   height: 1px;
 }
 .hud-crosshair::after {
-  height: 30px;
+  height: 26px;
   width: 1px;
 }
 
 .reticle-ring {
-  width: 100px;
-  height: 100px;
+  width: 90px;
+  height: 90px;
   border: 1px dashed rgba(245, 158, 11, 0.4);
   border-radius: 50%;
 }
@@ -147,13 +154,13 @@
 }
 
 .hud-left-panel {
-  left: 2.5rem;
+  left: 2rem;
   top: 50%;
   transform: translateY(-50%);
 }
 
 .hud-right-panel {
-  right: 2.5rem;
+  right: 2rem;
   top: 50%;
   transform: translateY(-50%);
 }
@@ -168,7 +175,7 @@
 
 .hud-title {
   font-family: var(--font-display);
-  font-size: 2.75rem;
+  font-size: clamp(1.8rem, 3.5vw, 2.75rem);
   line-height: 0.95;
   color: #ffffff;
   margin-bottom: 0.75rem;
@@ -179,7 +186,7 @@
 }
 
 .hud-desc {
-  font-size: 0.875rem;
+  font-size: clamp(0.8rem, 1.2vw, 0.9rem);
   color: var(--text-secondary);
   line-height: 1.5;
   margin-bottom: 1.25rem;
@@ -188,7 +195,7 @@
 .hud-data-table {
   width: 100%;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   border-collapse: collapse;
 }
 
@@ -197,7 +204,7 @@
 }
 
 .hud-data-table td {
-  padding: 0.4rem 0;
+  padding: 0.35rem 0;
 }
 
 .hud-data-table td:first-child {
@@ -214,6 +221,8 @@
 .ingredient-callout-container {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   z-index: 15;
 }
@@ -221,12 +230,12 @@
 .ingredient-callout {
   position: absolute;
   pointer-events: auto;
-  background: rgba(8, 18, 12, 0.85);
+  background: rgba(8, 18, 12, 0.88);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-green);
   border-radius: 6px;
-  padding: 0.6rem 0.9rem;
+  padding: 0.55rem 0.85rem;
   max-width: 250px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
   opacity: 0;
@@ -249,7 +258,7 @@
 
 .callout-name {
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: #ffffff;
   margin: 0.1rem 0;
 }
@@ -262,12 +271,12 @@
 
 .callout-temp {
   display: inline-block;
-  margin-top: 0.35rem;
+  margin-top: 0.3rem;
   font-family: var(--font-mono);
   font-size: 0.65rem;
   color: var(--green-light);
   background: rgba(16, 185, 129, 0.15);
-  padding: 0.15rem 0.45rem;
+  padding: 0.12rem 0.45rem;
   border-radius: 3px;
 }
 
@@ -275,8 +284,8 @@
 .hud-bottom-scrub {
   width: 100%;
   pointer-events: auto;
-  background: linear-gradient(180deg, transparent, rgba(6, 11, 8, 0.9) 30%);
-  padding: 1.5rem 0 0.5rem 0;
+  background: linear-gradient(180deg, transparent, rgba(6, 11, 8, 0.92) 30%);
+  padding: 1.25rem 0 0.5rem 0;
 }
 
 .scrub-telemetry-row {
@@ -284,22 +293,24 @@
   align-items: center;
   justify-content: space-between;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  margin-bottom: 0.6rem;
+  font-size: 0.72rem;
+  margin-bottom: 0.5rem;
+  gap: 0.5rem;
 }
 
 .scrub-state-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   color: var(--gold-light);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .scrub-ruler-track {
   position: relative;
   width: 100%;
-  height: 24px;
+  height: 22px;
   background: rgba(255, 255, 255, 0.03);
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
@@ -307,6 +318,7 @@
   display: flex;
   align-items: flex-end;
   overflow: hidden;
+  border-radius: 2px;
 }
 
 .scrub-ruler-ticks {
@@ -327,7 +339,7 @@
   top: 0;
   left: 0;
   bottom: 0;
-  background: linear-gradient(90deg, rgba(21, 128, 61, 0.3), rgba(245, 158, 11, 0.4));
+  background: linear-gradient(90deg, rgba(21, 128, 61, 0.35), rgba(245, 158, 11, 0.45));
   border-right: 2px solid var(--gold-light);
   pointer-events: none;
   box-shadow: 0 0 12px var(--gold-glow);
@@ -337,8 +349,8 @@
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%) rotate(45deg);
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   background: var(--gold-light);
   box-shadow: 0 0 8px var(--gold-glow);
   pointer-events: none;
@@ -355,16 +367,17 @@
   align-items: center;
   gap: 0.4rem;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
   color: var(--text-secondary);
   pointer-events: none;
   transition: opacity 0.5s ease;
+  white-space: nowrap;
 }
 
 .scroll-prompt-mouse {
-  width: 18px;
-  height: 28px;
+  width: 16px;
+  height: 26px;
   border: 2px solid rgba(255, 255, 255, 0.35);
   border-radius: 12px;
   position: relative;
@@ -372,11 +385,11 @@
 
 .scroll-prompt-wheel {
   position: absolute;
-  top: 5px;
+  top: 4px;
   left: 50%;
   transform: translateX(-50%);
-  width: 3px;
-  height: 6px;
+  width: 2px;
+  height: 5px;
   background: var(--green-bright);
   border-radius: 2px;
   animation: mouseWheel 1.5s infinite;
@@ -384,13 +397,14 @@
 
 @keyframes mouseWheel {
   0% { transform: translate(-50%, 0); opacity: 1; }
-  100% { transform: translate(-50%, 12px); opacity: 0; }
+  100% { transform: translate(-50%, 10px); opacity: 0; }
 }
 
 /* 3D Sandwich Story Component Styles */
 .sandwich-stage {
   position: relative;
   width: 100%;
+  max-width: 100vw;
   height: 100vh;
   perspective: 1200px;
   display: flex;
@@ -402,8 +416,8 @@
 
 .sandwich-stack-wrapper {
   position: relative;
-  width: 680px;
-  height: 480px;
+  width: min(90vw, 680px);
+  height: min(65vh, 460px);
   transform-style: preserve-3d;
   display: flex;
   align-items: center;
@@ -422,48 +436,189 @@
   pointer-events: none;
 }
 
-.sandwich-layer-img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.8));
+.sandwich-layer-content {
+  position: relative;
+  width: min(94%, 560px);
+  min-height: 48px;
+  border-radius: 10px;
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.8), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
-/* Responsive adjustments */
+/* Floating WhatsApp Sticky Action Button */
+.floating-whatsapp-btn {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 99;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: linear-gradient(135deg, #25d366, #128c7e);
+  color: #ffffff;
+  padding: 0.75rem 1.25rem;
+  border-radius: 50px;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 700;
+  box-shadow: 0 8px 30px rgba(37, 211, 102, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: var(--transition-smooth);
+  cursor: pointer;
+}
+
+.floating-whatsapp-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 12px 35px rgba(37, 211, 102, 0.6);
+  background: linear-gradient(135deg, #2ae06f, #159c8d);
+}
+
+/* Multi-device Media Queries */
 @media (max-width: 1024px) {
   .hud-side-panel {
-    max-width: 250px;
-  }
-  .hud-title {
-    font-size: 2rem;
+    max-width: 240px;
   }
   .hud-left-panel {
-    left: 1.5rem;
+    left: 1rem;
   }
   .hud-right-panel {
-    right: 1.5rem;
+    right: 1rem;
+  }
+  .hud-layer {
+    padding: 5rem 1rem 1.25rem 1rem;
   }
 }
 
 @media (max-width: 768px) {
   .hud-side-panel {
-    display: none; /* Keep mobile view ultra clean focused on the food */
+    position: absolute;
+    top: auto;
+    bottom: 5.5rem;
+    left: 1rem !important;
+    right: 1rem !important;
+    max-width: none;
+    width: auto;
+    transform: none !important;
+    background: rgba(6, 11, 8, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--border-green);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
+
+  .hud-side-panel .hud-desc {
+    display: none; /* Hide long paragraph on mobile to keep food clearly visible */
+  }
+
+  .hud-right-panel {
+    display: none; /* Specs table hidden on mobile to prevent clutter */
+  }
+
   .hud-corner {
     display: none;
   }
+
   .hud-layer {
-    padding: 4.5rem 1rem 1rem 1rem;
+    padding: 4.5rem 0.75rem 0.75rem 0.75rem;
   }
+
   .hud-title {
-    font-size: 1.75rem;
+    font-size: 1.6rem;
+    margin-bottom: 0.35rem;
   }
-  .sandwich-stack-wrapper {
-    width: 90vw;
-    height: 380px;
+
+  .hud-specs-badge span:nth-child(3),
+  .hud-specs-badge span:nth-child(4) {
+    display: none; /* Hide secondary camera tags on mobile */
   }
+
+  .scrub-telemetry-row span:last-child {
+    display: none; /* Hide SECTION 01 / 02 on mobile */
+  }
+
   .ingredient-callout {
-    max-width: 180px;
+    max-width: 160px;
     padding: 0.4rem 0.6rem;
+    font-size: 0.7rem;
+  }
+
+  .callout-name {
+    font-size: 0.9rem;
+  }
+
+  .callout-specs {
+    font-size: 0.65rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .sandwich-layer-content {
+    padding: 0 0.85rem;
+    min-height: 42px;
+  }
+
+  .sandwich-layer-content span {
+    font-size: 0.95rem !important;
+  }
+
+  .floating-whatsapp-btn {
+    bottom: 1rem;
+    right: 1rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hud-layer {
+    padding: 4.2rem 0.5rem 0.5rem 0.5rem;
+  }
+
+  .hud-rec-badge {
+    font-size: 0.68rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .hud-specs-badge {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.5rem;
+    gap: 0.4rem;
+  }
+
+  .scrub-telemetry-row {
+    font-size: 0.65rem;
+  }
+
+  .sandwich-layer-content {
+    min-height: 38px;
+    padding: 0 0.6rem;
+  }
+
+  .sandwich-layer-content span {
+    font-size: 0.82rem !important;
+  }
+
+  .floating-whatsapp-btn span {
+    display: none; /* On tiny screens show icon only */
+  }
+  .floating-whatsapp-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    padding: 0;
+    justify-content: center;
   }
 }
