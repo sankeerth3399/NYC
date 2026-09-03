@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import HudOverlay from './HudOverlay';
@@ -17,20 +17,26 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [currentFrame, setCurrentFrame] = useState(1);
   const [imagesLoaded, setImagesLoaded] = useState(false);
-  const [activeCallouts, setActiveCallouts] = useState([]);
-  const [viewportWidth, setViewportWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const [viewport, setViewport] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1200,
+    height: typeof window !== 'undefined' ? window.innerHeight : 800,
+  });
 
+  // Keep track of viewport dimensions
   useEffect(() => {
     const handleResize = () => {
-      setViewportWidth(window.innerWidth);
+      setViewport({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const isMobile = viewportWidth < 768;
-  const isTablet = viewportWidth >= 768 && viewportWidth < 1100;
-  const isDesktop = viewportWidth >= 1100;
+  const isMobile = viewport.width < 768;
+  const isTablet = viewport.width >= 768 && viewport.width < 1100;
+  const isDesktop = viewport.width >= 1100;
 
   // Preload frames
   useEffect(() => {
@@ -55,7 +61,33 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
     imagesRef.current = images;
   }, []);
 
-  // Adaptive Canvas Rendering: Full Animation Fully Visible on Mobile (No Cropping)
+  // Compute CSS layout parameters for burger positioning & annotation alignment
+  const cssLayout = useMemo(() => {
+    const cw = viewport.width;
+    const ch = viewport.height;
+    const iw = 1928;
+    const ih = 1076;
+    const isPortrait = ch > cw;
+
+    let scale;
+    if (isPortrait) {
+      scale = Math.min((cw * 0.94) / iw, (ch * 0.44) / ih);
+    } else {
+      scale = Math.min((cw * 0.92) / iw, (ch * 0.78) / ih);
+    }
+
+    const nw = iw * scale;
+    const nh = ih * scale;
+    const cx = (cw - nw) / 2;
+    const cy = isPortrait ? Math.max(75, (ch - nh) / 2 - (isMobile ? 35 : 15)) : (ch - nh) / 2;
+
+    const burgerCenterX = cx + nw * 0.5;
+    const burgerHalfWidth = nw * 0.21; // Approximate radius of the burger in the frame
+
+    return { cw, ch, nw, nh, cx, cy, burgerCenterX, burgerHalfWidth };
+  }, [viewport.width, viewport.height, isMobile]);
+
+  // Adaptive Canvas Rendering
   const renderFrame = (index) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -66,6 +98,7 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
     const img = imagesRef.current[frameIdx];
 
     if (img && img.complete && img.naturalWidth > 0) {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const cw = canvas.width;
       const ch = canvas.height;
       const iw = img.naturalWidth;
@@ -75,27 +108,15 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
       let scale;
 
       if (isPortrait) {
-        // Mobile & Tablet Portrait:
-        // Contain the FULL 16:9 widescreen animation (fries on left, exploding burger in center, shake on right)
-        // With comfortable margins so NOTHING is cut off at the sides, top, or bottom.
         scale = Math.min((cw * 0.94) / iw, (ch * 0.44) / ih);
       } else {
-        // Laptops & Desktops:
         scale = Math.min((cw * 0.92) / iw, (ch * 0.78) / ih);
       }
 
       const nw = iw * scale;
       const nh = ih * scale;
       const cx = (cw - nw) / 2;
-
-      // On portrait/mobile, position food slightly above center so it never collides with bottom scrub bar or cards
-      let cy;
-      if (isPortrait) {
-        // Position comfortably in the upper-middle area (below top header, above bottom HUD)
-        cy = Math.max(75, (ch - nh) / 2 - (isMobile ? 35 : 15));
-      } else {
-        cy = (ch - nh) / 2;
-      }
+      const cy = isPortrait ? Math.max(75 * dpr, (ch - nh) / 2 - (isMobile ? 35 : 15) * dpr) : (ch - nh) / 2;
 
       ctx.clearRect(0, 0, cw, ch);
       ctx.drawImage(img, cx, cy, nw, nh);
@@ -135,12 +156,6 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
           frameObject.frame = targetFrame;
           setCurrentFrame(targetFrame + 1);
           renderFrame(targetFrame);
-
-          if (prog > 0.15 && prog < 0.70) {
-            setActiveCallouts(BURGER_LAYERS);
-          } else {
-            setActiveCallouts([]);
-          }
         },
       });
     }, containerRef);
@@ -154,23 +169,23 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
       window.removeEventListener('resize', updateCanvasSize);
       ctx.revert();
     };
-  }, [viewportWidth]);
+  }, [viewport.width, viewport.height]);
 
+  // Status text for the camera telemetry
   let statusText = 'SCROLL TO UNPACK EVERY LAYER';
-  if (scrollProgress > 0.15 && scrollProgress < 0.70) {
-    statusText = 'PHYSICAL SEPARATION // 7 LAYERS ISOLATED';
-  } else if (scrollProgress >= 0.70 && scrollProgress < 0.92) {
+  if (scrollProgress > 0.12 && scrollProgress < 0.75) {
+    statusText = '7 CRAFT COMPONENTS IDENTIFIED // EXPLODED VIEW';
+  } else if (scrollProgress >= 0.75 && scrollProgress < 0.90) {
     statusText = 'REASSEMBLING IN SEQUENCE // DOCKING';
-  } else if (scrollProgress >= 0.92) {
+  } else if (scrollProgress >= 0.90) {
     statusText = 'PERFECTLY ASSEMBLED // READY TO SERVE';
   }
 
-  // Active layer calculation for mobile & tablet focused view
+  // Active layer calculation for scroll telemetry
   const activeLayerIndex = Math.min(
     BURGER_LAYERS.length - 1,
-    Math.max(0, Math.floor(((scrollProgress - 0.15) / 0.55) * BURGER_LAYERS.length))
+    Math.max(0, Math.floor(((scrollProgress - 0.14) / 0.60) * BURGER_LAYERS.length))
   );
-  const focusedLayer = BURGER_LAYERS[activeLayerIndex];
 
   const handleScrubClick = (ratio) => {
     const st = ScrollTrigger.getById('hero-burger-st') || ScrollTrigger.getAll()[0];
@@ -187,10 +202,14 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
     window.open(`https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${text}`, '_blank');
   };
 
-  // On mobile: top card fades out IMMEDIATELY on scroll (by 3%) so food is completely clear!
+  // Visibility toggles
   const isIntroCardVisible = isMobile
     ? scrollProgress < 0.03
     : scrollProgress < 0.12 || scrollProgress > 0.88;
+
+  // The ingredient labels are active while animating/exploded between 14% and 76% scroll
+  const areAnnotationsActive = scrollProgress >= 0.13 && scrollProgress <= 0.76;
+  const annotationsOpacity = areAnnotationsActive ? Math.min(1, Math.max(0, (scrollProgress - 0.13) / 0.06)) : 0;
 
   return (
     <section
@@ -298,70 +317,187 @@ export default function HeroStoryBurger({ onOpenOrderModal }) {
         </div>
       )}
 
-      {/* Ingredient Callouts */}
-      {/* 1. Large Desktops (>= 1100px): Lateral floating callouts */}
-      {isDesktop && (
-        <div className="ingredient-callout-container">
+      {/* ============================================================ */}
+      {/* INTERACTIVE INGREDIENT NAMES ON THE SCROLL ANIMATION (NEW) */}
+      {/* Pointer lines, focal dots, and live ingredient name badges   */}
+      {/* ============================================================ */}
+      {areAnnotationsActive && cssLayout.nw > 0 && (
+        <div
+          className="ingredient-annotations-overlay"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            zIndex: 22,
+            opacity: annotationsOpacity,
+            transition: 'opacity 0.35s ease',
+          }}
+        >
+          {/* SVG Connector Lines */}
+          <svg
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+            }}
+          >
+            {BURGER_LAYERS.map((layer, idx) => {
+              const isLeft = layer.side === 'left';
+              const yPin = cssLayout.cy + cssLayout.nh * layer.yRatio;
+              const xPin = isLeft
+                ? cssLayout.burgerCenterX - cssLayout.burgerHalfWidth * 0.65
+                : cssLayout.burgerCenterX + cssLayout.burgerHalfWidth * 0.65;
+
+              // Tag connector target coordinate
+              const xTag = isLeft
+                ? isMobile ? 115 : Math.max(25, cssLayout.burgerCenterX - cssLayout.burgerHalfWidth - 140)
+                : isMobile ? viewport.width - 115 : Math.min(viewport.width - 25, cssLayout.burgerCenterX + cssLayout.burgerHalfWidth + 140);
+
+              const isFocus = idx === activeLayerIndex;
+
+              return (
+                <g key={`line-${layer.id}`}>
+                  {/* Subtle dotted connector leader line */}
+                  <line
+                    x1={xTag}
+                    y1={yPin}
+                    x2={xPin}
+                    y2={yPin}
+                    stroke={isFocus ? 'var(--gold-light)' : 'rgba(255, 255, 255, 0.28)'}
+                    strokeWidth={isFocus ? 1.5 : 1}
+                    strokeDasharray={isFocus ? 'none' : '3 3'}
+                  />
+                  {/* Glowing Pin Dot directly on the ingredient slice */}
+                  <circle
+                    cx={xPin}
+                    cy={yPin}
+                    r={isFocus ? 5 : 3.5}
+                    fill={isFocus ? 'var(--gold-light)' : 'var(--green-light)'}
+                    filter="drop-shadow(0 0 6px var(--gold-glow))"
+                  />
+                  {/* Outer pulse halo */}
+                  {isFocus && (
+                    <circle
+                      cx={xPin}
+                      cy={yPin}
+                      r={9}
+                      fill="none"
+                      stroke="var(--gold-light)"
+                      strokeWidth={1.5}
+                      opacity={0.8}
+                    />
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+
+          {/* HTML Ingredient Name Badges */}
           {BURGER_LAYERS.map((layer, idx) => {
             const isLeft = layer.side === 'left';
-            const topPercent = 18 + idx * 10;
-            const leftPercent = isLeft ? 8 : 72;
+            const yPin = cssLayout.cy + cssLayout.nh * layer.yRatio;
+            const isFocus = idx === activeLayerIndex;
+
+            // Position tag on left or right side
+            const tagStyle = isLeft
+              ? {
+                  position: 'absolute',
+                  top: `${yPin}px`,
+                  left: isMobile ? '8px' : `${Math.max(20, cssLayout.burgerCenterX - cssLayout.burgerHalfWidth - 250)}px`,
+                  transform: 'translateY(-50%)',
+                }
+              : {
+                  position: 'absolute',
+                  top: `${yPin}px`,
+                  right: isMobile ? '8px' : `${Math.max(20, viewport.width - (cssLayout.burgerCenterX + cssLayout.burgerHalfWidth + 250))}px`,
+                  transform: 'translateY(-50%)',
+                };
 
             return (
               <div
-                key={layer.id}
-                className={`ingredient-callout ${activeCallouts.length > 0 ? 'active' : ''}`}
+                key={`badge-${layer.id}`}
+                className={`ingredient-live-badge ${isFocus ? 'active-focus' : ''}`}
                 style={{
-                  top: `${topPercent}%`,
-                  left: `${leftPercent}%`,
-                  transitionDelay: `${idx * 0.03}s`,
+                  ...tagStyle,
+                  pointerEvents: 'auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: isMobile ? '0.35rem' : '0.55rem',
+                  background: isFocus
+                    ? 'rgba(20, 42, 28, 0.94)'
+                    : 'rgba(8, 16, 11, 0.88)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  border: isFocus
+                    ? '1px solid var(--gold-light)'
+                    : '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '6px',
+                  padding: isMobile ? '0.22rem 0.5rem' : '0.45rem 0.85rem',
+                  boxShadow: isFocus
+                    ? '0 6px 25px rgba(245, 158, 11, 0.35)'
+                    : '0 4px 15px rgba(0, 0, 0, 0.5)',
+                  transition: 'all 0.25s ease',
+                  cursor: 'pointer',
+                  maxWidth: isMobile ? '135px' : '280px',
                 }}
+                onClick={() => onOpenOrderModal({ name: `Double Smash w/ ${layer.name}`, price: 7.99 })}
               >
-                <span className="callout-tag">{layer.tag}</span>
-                <h3 className="callout-name">{layer.name}</h3>
-                <p className="callout-specs">{layer.specs}</p>
-                <span className="callout-temp">{layer.temp}</span>
+                {/* Index Pill */}
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: isMobile ? '0.62rem' : '0.72rem',
+                    fontWeight: 700,
+                    color: isFocus ? 'var(--gold-bright)' : 'var(--green-light)',
+                    background: isFocus ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.15)',
+                    padding: '0.1rem 0.35rem',
+                    borderRadius: '3px',
+                    flexShrink: 0,
+                  }}
+                >
+                  0{idx + 1}
+                </span>
+
+                {/* Name & Metric */}
+                <div style={{ overflow: 'hidden' }}>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontSize: isMobile ? '0.68rem' : '0.96rem',
+                      fontWeight: 700,
+                      color: isFocus ? '#ffffff' : 'rgba(255, 255, 255, 0.95)',
+                      letterSpacing: '0.02em',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: 'block',
+                      lineHeight: 1.15,
+                    }}
+                  >
+                    {isMobile ? layer.shortName : layer.name}
+                  </span>
+
+                  {/* Desktop Metric Subtext */}
+                  {!isMobile && (
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.65rem',
+                        color: isFocus ? 'var(--gold-light)' : 'var(--text-secondary)',
+                        display: 'block',
+                        marginTop: '0.1rem',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {layer.temp}
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* 2. Tablets & Mobile (< 1100px): Clean centered active layer badge */}
-      {!isDesktop && scrollProgress > 0.15 && scrollProgress < 0.70 && focusedLayer && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: isMobile ? '5.25rem' : '6.5rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: 'rgba(8, 18, 12, 0.94)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid var(--border-green)',
-            borderRadius: '10px',
-            padding: isMobile ? '0.55rem 0.85rem' : '0.85rem 1.5rem',
-            width: 'min(92vw, 390px)',
-            boxShadow: '0 12px 35px rgba(0, 0, 0, 0.85)',
-            zIndex: 25,
-            textAlign: 'center',
-            transition: 'all 0.3s ease',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--gold-light)' }}>
-              LAYER 0{activeLayerIndex + 1} / 07 • {focusedLayer.tag}
-            </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--green-light)' }}>
-              {focusedLayer.temp}
-            </span>
-          </div>
-          <h4 style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? '1.05rem' : '1.35rem', color: '#ffffff', margin: '0.1rem 0' }}>
-            {focusedLayer.name}
-          </h4>
-          <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.3 }}>
-            {focusedLayer.specs}
-          </p>
         </div>
       )}
 
