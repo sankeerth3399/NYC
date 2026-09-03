@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@theme {
+  --color-deli-green-50: #f0fdf4;
+  --color-deli-green-100: #dcfce7;
+  --color-deli-green-200: #bbf7d0;
+  --color-deli-green-300: #86efac;
+  --color-deli-green-400: #4ade80;
+  --color-deli-green-500: #22c55e;
+  --color-deli-green-600: #16a34a;
+  --color-deli-green-700: #15803d;
+  --color-deli-green-800: #166534;
+  --color-deli-green-900: #14532d;
+  --color-deli-green-950: #072b16;
+  --color-deli-green-brand: #0D3823;
+  --color-deli-green-deep: #072014;
+
+  --color-deli-amber-50: #fffbeb;
+  --color-deli-amber-100: #fef3c7;
+  --color-deli-amber-200: #fde68a;
+  --color-deli-amber-300: #fcd34d;
+  --color-deli-amber-400: #fbbf24;
+  --color-deli-amber-500: #f59e0b;
+  --color-deli-amber-600: #d97706;
+  --color-deli-amber-700: #b45309;
+  --color-deli-amber-brand: #E59819;
+
+  --font-sans: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
+  --font-display: "Cabinet Grotesk", "Outfit", "Plus Jakarta Sans", sans-serif;
+}
+
+:root {
+  --brand-green: #0D3823;
+  --brand-amber: #E59819;
+  --bg-dark: #08150E;
+  --surface-card: #102419;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: #F3F4F6;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #08150E;
+}
+::-webkit-scrollbar-thumb {
+  background: #1B432C;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #276241;
+}
+
+/* Background noise pattern */
+.bg-deli-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+/* Glass utilities */
+.glass-panel {
+  background: rgba(13, 56, 35, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(18, 38, 27, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Smooth motion & reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
