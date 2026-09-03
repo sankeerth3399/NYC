@@ -1,27 +1,99 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { Camera, Eye, ArrowUpRight } from 'lucide-react';
 import { galleryItems } from '../../data/gallery';
 import { Lightbox } from '../ui/Lightbox';
+import { gsap, isReducedMotion } from '../../lib/animations/gsapInit';
 
 export const GallerySection: React.FC = () => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const sectionRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const itemsRef = useRef<(HTMLElement | null)[]>([]);
 
   const openLightbox = (index: number) => {
     setCurrentIndex(index);
     setLightboxOpen(true);
   };
 
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      const reduced = isReducedMotion();
+      if (reduced) return;
+
+      // Header entrance
+      gsap.fromTo(
+        headerRef.current,
+        { opacity: 0, y: 35 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: headerRef.current,
+            start: 'top 85%',
+            once: true,
+          },
+        }
+      );
+
+      // Asymmetric rhythmic entrance & subtle parallax for gallery cards
+      itemsRef.current.forEach((el, index) => {
+        if (!el) return;
+        const speed = index % 2 === 0 ? -20 : 20;
+
+        // Entrance timeline
+        gsap.fromTo(
+          el,
+          { opacity: 0, y: 50, scale: 0.96 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.9,
+            delay: (index % 3) * 0.15,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: el,
+              start: 'top 88%',
+              once: true,
+            },
+          }
+        );
+
+        // Subtle scroll parallax
+        gsap.to(el, {
+          y: speed,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: el,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1.5,
+          },
+        });
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section className="py-24 md:py-36 bg-[#05140C] relative overflow-hidden border-t border-emerald-950/80">
+    <section
+      ref={sectionRef}
+      className="py-20 md:py-28 bg-[#05140C] relative overflow-hidden border-t border-emerald-950/80"
+    >
       {/* Glow */}
       <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] ambient-glow-amber rounded-full blur-[160px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Editorial Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <div
+          ref={headerRef}
+          className="text-center max-w-3xl mx-auto mb-16 space-y-4"
+        >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-xs font-bold text-deli-amber-400 uppercase tracking-widest">
             <Camera className="w-3.5 h-3.5" />
             <span>06 • Visual Food Portfolio</span>
@@ -41,12 +113,11 @@ export const GallerySection: React.FC = () => {
             const isTall = item.span === 'tall';
 
             return (
-              <motion.article
+              <article
                 key={item.id}
-                initial={{ opacity: 0, y: 35 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.65, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                ref={(el) => {
+                  itemsRef.current[index] = el;
+                }}
                 onClick={() => openLightbox(index)}
                 className={`relative rounded-[2rem] overflow-hidden cursor-pointer group bg-[#0A1D12] border border-emerald-500/25 hover:border-emerald-400/60 shadow-2xl transition-all duration-500 ${
                   isWide ? 'md:col-span-2 lg:col-span-2' : ''
@@ -57,7 +128,7 @@ export const GallerySection: React.FC = () => {
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out will-change-transform"
                 />
 
                 {/* Film Noir Dark Overlay Gradient */}
@@ -92,7 +163,7 @@ export const GallerySection: React.FC = () => {
                     <ArrowUpRight className="w-5 h-5 group-hover:rotate-45 transition-transform duration-300" />
                   </div>
                 </div>
-              </motion.article>
+              </article>
             );
           })}
         </div>

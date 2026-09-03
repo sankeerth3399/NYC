@@ -1,28 +1,83 @@
-import React, { useRef } from 'react';
+import React, { useRef, useLayoutEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { ArrowRight, MapPin, Store } from 'lucide-react';
 import { aboutStory } from '../../data/business';
+import { gsap, isReducedMotion } from '../../lib/animations/gsapInit';
 
 export const StorySection: React.FC = () => {
-  const containerRef = useRef<HTMLElement>(null);
-  const shouldReduceMotion = useReducedMotion();
+  const sectionRef = useRef<HTMLElement>(null);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const badgeRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const textRef = useRef<HTMLParagraphElement>(null);
+  const pillarsRef = useRef<(HTMLDivElement | null)[]>([]);
 
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start end', 'end start'],
-  });
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      const reduced = isReducedMotion();
+      if (reduced) return;
 
-  const imageY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    shouldReduceMotion ? ['0%', '0%'] : ['-8%', '8%']
-  );
+      // Parallax scroll on the story photo
+      gsap.fromTo(
+        imageRef.current,
+        { y: '-8%', scale: 1.05 },
+        {
+          y: '8%',
+          scale: 1.12,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: imageContainerRef.current,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1.5,
+          },
+        }
+      );
+
+      // Oversized typography entrance
+      gsap.fromTo(
+        headingRef.current,
+        { y: 60, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.9,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: headingRef.current,
+            start: 'top 85%',
+            once: true,
+          },
+        }
+      );
+
+      // Story pillars staggered entrance
+      gsap.fromTo(
+        pillarsRef.current,
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          stagger: 0.12,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: textRef.current,
+            start: 'top 80%',
+            once: true,
+          },
+        }
+      );
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
 
   return (
     <section
-      ref={containerRef}
-      className="py-24 md:py-36 bg-[#040e08] relative overflow-hidden border-t border-emerald-950/80"
+      ref={sectionRef}
+      className="py-20 md:py-28 bg-[#040e08] relative overflow-hidden border-t border-emerald-950/80"
     >
       {/* Background Glow */}
       <div className="absolute top-1/2 left-0 w-[600px] h-[600px] ambient-glow-emerald rounded-full blur-[160px] pointer-events-none" />
@@ -32,23 +87,29 @@ export const StorySection: React.FC = () => {
           
           {/* Left Column: Parallax Image Showcase with Film Vignette */}
           <div className="lg:col-span-6 relative">
-            <div className="relative rounded-[2.2rem] overflow-hidden border-2 border-emerald-500/30 shadow-2xl shadow-black bg-[#0A1D12]">
-              <motion.div
-                style={{ y: imageY }}
-                className="relative h-[420px] sm:h-[500px] lg:h-[560px] w-full will-change-transform"
+            <div
+              ref={imageContainerRef}
+              className="relative rounded-[2.2rem] overflow-hidden border-2 border-emerald-500/30 shadow-2xl shadow-black bg-[#0A1D12]"
+            >
+              <div
+                className="relative h-[420px] sm:h-[500px] lg:h-[560px] w-full overflow-hidden"
                 data-cursor="view"
               >
                 <img
+                  ref={imageRef}
                   src="/images/deli-sub.jpg"
                   alt="Meko Deli freshly prepared submarine cold cuts and sandwiches in Utica, NY"
-                  className="w-full h-full object-cover object-center scale-105 hover:scale-110 transition-transform duration-1000 ease-out"
+                  className="w-full h-full object-cover object-center will-change-transform"
                 />
-              </motion.div>
+              </div>
 
               <div className="absolute inset-0 bg-gradient-to-t from-[#040e08] via-transparent to-black/20 pointer-events-none" />
 
               {/* Floating Address / Heritage Badge */}
-              <div className="absolute bottom-6 left-6 right-6 p-5 rounded-2xl bg-[#07190F]/95 backdrop-blur-xl border border-emerald-400/30 flex items-center justify-between shadow-2xl">
+              <div
+                ref={badgeRef}
+                className="absolute bottom-6 left-6 right-6 p-5 rounded-2xl bg-[#07190F]/95 backdrop-blur-xl border border-emerald-400/30 flex items-center justify-between shadow-2xl"
+              >
                 <div>
                   <p className="text-[11px] font-bold text-deli-amber-400 uppercase tracking-widest">
                     Utica Local Cornerstone
@@ -75,25 +136,25 @@ export const StorySection: React.FC = () => {
 
               {/* Oversized Brand Typography: "MORE THAN A DELI." */}
               <div className="overflow-hidden">
-                <motion.h2
-                  initial={{ y: '100%', opacity: 0 }}
-                  whileInView={{ y: '0%', opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                <h2
+                  ref={headingRef}
                   className="text-section-title font-display font-black text-white tracking-tight uppercase leading-[0.95]"
                 >
                   MORE THAN<br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-deli-amber-400 to-amber-500">
                     A DELI.
                   </span>
-                </motion.h2>
+                </h2>
               </div>
 
               <p className="text-lg sm:text-xl text-emerald-300/90 font-medium leading-relaxed">
                 {aboutStory.lead}
               </p>
 
-              <p className="text-sm sm:text-base text-gray-300 leading-relaxed font-normal">
+              <p
+                ref={textRef}
+                className="text-sm sm:text-base text-gray-300 leading-relaxed font-normal"
+              >
                 {aboutStory.bodyParagraphs[0]}
               </p>
             </div>
@@ -101,13 +162,12 @@ export const StorySection: React.FC = () => {
             {/* 3 Story Pillars */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
               {aboutStory.pillars.map((pillar, idx) => (
-                <motion.div
+                <div
                   key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: idx * 0.12 }}
-                  className="p-5 rounded-2xl bg-[#091D12] border border-emerald-500/20 hover:border-emerald-400/40 space-y-2 transition-all duration-300 group"
+                  ref={(el) => {
+                    pillarsRef.current[idx] = el;
+                  }}
+                  className="p-5 rounded-2xl bg-[#091D12] border border-emerald-500/20 hover:border-emerald-400/40 space-y-2 transition-all duration-300 group hover:-translate-y-1.5"
                 >
                   <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded bg-emerald-950 text-deli-amber-400 border border-emerald-800/40">
                     {pillar.badge}
@@ -118,7 +178,7 @@ export const StorySection: React.FC = () => {
                   <p className="text-xs text-gray-300 leading-relaxed">
                     {pillar.desc}
                   </p>
-                </motion.div>
+                </div>
               ))}
             </div>
 

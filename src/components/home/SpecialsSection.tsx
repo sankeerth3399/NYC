@@ -1,15 +1,103 @@
-import React from 'react';
+import React, { useRef, useLayoutEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight, Flame, Phone } from 'lucide-react';
 import { specialsData } from '../../data/specials';
 import { businessData } from '../../data/business';
 import { WhatsAppIcon } from '../ui/WhatsAppIcon';
-import { ImageReveal } from '../motion/ImageReveal';
+import { gsap, isReducedMotion } from '../../lib/animations/gsapInit';
 
 export const SpecialsSection: React.FC = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<(HTMLElement | null)[]>([]);
+
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      const reduced = isReducedMotion();
+      if (reduced) return;
+
+      // Section header entrance
+      gsap.fromTo(
+        headerRef.current,
+        { opacity: 0, y: 40 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: headerRef.current,
+            start: 'top 85%',
+            once: true,
+          },
+        }
+      );
+
+      // Staggered cinematic reveal for each special card
+      cardsRef.current.forEach((card, index) => {
+        if (!card) return;
+
+        const img = card.querySelector('.special-img');
+        const heading = card.querySelector('.special-title');
+        const desc = card.querySelector('.special-desc');
+        const price = card.querySelector('.special-price');
+        const cta = card.querySelector('.special-cta');
+
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: card,
+            start: 'top 82%',
+            once: true,
+          },
+          delay: index * 0.12,
+        });
+
+        tl.fromTo(
+          card,
+          { opacity: 0, y: 45 },
+          { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }
+        )
+          .fromTo(
+            img,
+            { scale: 1.15, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.9, ease: 'power2.out' },
+            '-=0.6'
+          )
+          .fromTo(
+            heading,
+            { y: 20, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out' },
+            '-=0.5'
+          )
+          .fromTo(
+            desc,
+            { y: 15, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' },
+            '-=0.4'
+          )
+          .fromTo(
+            price,
+            { scale: 0.8, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.4, ease: 'back.out(1.4)' },
+            '-=0.3'
+          )
+          .fromTo(
+            cta,
+            { opacity: 0, y: 10 },
+            { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
+            '-=0.2'
+          );
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section className="py-24 md:py-36 bg-[#05140C] relative overflow-hidden border-t border-b border-emerald-950/70">
+    <section
+      ref={sectionRef}
+      className="py-20 md:py-28 bg-[#05140C] relative overflow-hidden border-t border-b border-emerald-950/70"
+    >
       {/* Background Accent Ambient Lighting */}
       <div className="absolute top-0 right-1/4 w-[600px] h-[600px] ambient-glow-emerald rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-10 w-[500px] h-[500px] ambient-glow-amber rounded-full blur-3xl pointer-events-none" />
@@ -17,7 +105,10 @@ export const SpecialsSection: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Editorial Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
+        <div
+          ref={headerRef}
+          className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-8"
+        >
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-xs font-bold text-deli-amber-400 uppercase tracking-widest">
               <Sparkles className="w-3.5 h-3.5" />
@@ -47,27 +138,24 @@ export const SpecialsSection: React.FC = () => {
           {specialsData.slice(0, 3).map((special, index) => {
             const numStr = `0${index + 1}`;
             return (
-              <motion.article
+              <article
                 key={special.id}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-60px' }}
-                transition={{ duration: 0.7, delay: index * 0.15, ease: [0.16, 1, 0.3, 1] }}
-                whileHover={{ y: -8 }}
-                className="rounded-[2rem] bg-[#0A1F14] border border-emerald-500/25 hover:border-emerald-400/50 shadow-2xl shadow-black/80 overflow-hidden flex flex-col justify-between group transition-all duration-300 relative"
+                ref={(el) => {
+                  cardsRef.current[index] = el;
+                }}
+                className="rounded-[2rem] bg-[#0A1F14] border border-emerald-500/25 hover:border-emerald-400/50 shadow-2xl shadow-black/80 overflow-hidden flex flex-col justify-between group hover:-translate-y-2 transition-transform duration-300 relative"
               >
                 {/* Big Number Editorial Accent */}
                 <div className="absolute top-4 right-6 text-emerald-500/10 group-hover:text-deli-amber-500/20 font-display font-black text-6xl select-none transition-colors pointer-events-none">
                   {numStr}
                 </div>
 
-                {/* Card Image with ImageReveal */}
+                {/* Card Image */}
                 <div className="relative h-64 sm:h-72 overflow-hidden bg-black/50" data-cursor="view">
-                  <ImageReveal
+                  <img
                     src={special.image}
                     alt={special.name}
-                    containerClassName="w-full h-full"
-                    imageClassName="group-hover:scale-108 transition-transform duration-700 ease-out"
+                    className="special-img w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out will-change-transform"
                   />
                   
                   {/* Category & Badge Chips */}
@@ -83,7 +171,7 @@ export const SpecialsSection: React.FC = () => {
                   </div>
 
                   {/* Price Pill */}
-                  <div className="absolute bottom-4 right-4 z-10 px-3.5 py-1.5 rounded-xl bg-emerald-950/95 backdrop-blur-md border border-emerald-400/50 text-emerald-300 font-mono font-black text-sm shadow-xl">
+                  <div className="special-price absolute bottom-4 right-4 z-10 px-3.5 py-1.5 rounded-xl bg-emerald-950/95 backdrop-blur-md border border-emerald-400/50 text-emerald-300 font-mono font-black text-sm shadow-xl">
                     {special.price}
                   </div>
                 </div>
@@ -93,10 +181,10 @@ export const SpecialsSection: React.FC = () => {
                   <div className="space-y-2.5">
                     <div className="flex items-center gap-2 text-xs text-deli-amber-400 font-bold uppercase tracking-wider">
                       <Flame className="w-3.5 h-3.5 text-orange-400" />
-                      <span>{special.availableDays || "Daily Deal"}</span>
+                      <span>{special.availableDays || 'Daily Deal'}</span>
                     </div>
 
-                    <h3 className="text-2xl font-display font-black text-white group-hover:text-deli-amber-300 transition-colors leading-tight">
+                    <h3 className="special-title text-2xl font-display font-black text-white group-hover:text-deli-amber-300 transition-colors leading-tight">
                       {special.name}
                     </h3>
 
@@ -104,13 +192,13 @@ export const SpecialsSection: React.FC = () => {
                       {special.tagline}
                     </p>
 
-                    <p className="text-sm text-gray-300 leading-relaxed line-clamp-3">
+                    <p className="special-desc text-sm text-gray-300 leading-relaxed line-clamp-3">
                       {special.description}
                     </p>
                   </div>
 
                   {/* Actions */}
-                  <div className="pt-5 border-t border-emerald-900/60 flex items-center justify-between gap-3">
+                  <div className="special-cta pt-5 border-t border-emerald-900/60 flex items-center justify-between gap-3">
                     <a
                       href={businessData.whatsappUrl || `https://wa.me/${businessData.whatsappRaw || '13158643000'}?text=${encodeURIComponent(`Hi Meko Deli, I would like to order the special: ${special.name}`)}`}
                       target="_blank"
@@ -130,7 +218,7 @@ export const SpecialsSection: React.FC = () => {
                     </a>
                   </div>
                 </div>
-              </motion.article>
+              </article>
             );
           })}
         </div>

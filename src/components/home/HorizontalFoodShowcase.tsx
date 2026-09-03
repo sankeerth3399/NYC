@@ -1,9 +1,9 @@
-import React, { useRef } from 'react';
-import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
+import React, { useRef, useLayoutEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Star, Sparkles } from 'lucide-react';
 import { businessData } from '../../data/business';
 import { WhatsAppIcon } from '../ui/WhatsAppIcon';
+import { gsap, isReducedMotion } from '../../lib/animations/gsapInit';
 
 interface ShowcaseItem {
   id: string;
@@ -71,29 +71,77 @@ const showcaseItems: ShowcaseItem[] = [
 
 export const HorizontalFoodShowcase: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const shouldReduceMotion = useReducedMotion();
+  const trackRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<(HTMLElement | null)[]>([]);
 
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start end', 'end start'],
-  });
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      const reduced = isReducedMotion();
+      const mm = gsap.matchMedia();
 
-  // Desktop subtle horizontal drift during scroll
-  const x = useTransform(
-    scrollYProgress,
-    [0, 1],
-    shouldReduceMotion ? ['0%', '0%'] : ['4%', '-16%']
-  );
+      // Desktop: ScrollTrigger pinned horizontal track
+      mm.add('(min-width: 1024px)', () => {
+        if (reduced) return;
+
+        const track = trackRef.current;
+        if (!track) return;
+
+        const getScrollAmount = () => {
+          const trackWidth = track.scrollWidth;
+          return -(trackWidth - window.innerWidth + 120);
+        };
+
+        const tween = gsap.to(track, {
+          x: getScrollAmount,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: 'top top',
+            end: () => `+=${Math.abs(getScrollAmount())}`,
+            pin: true,
+            scrub: 1,
+            invalidateOnRefresh: true,
+            anticipatePin: 1,
+          },
+        });
+
+        // Individual card subtle image scale as user scrolls
+        cardsRef.current.forEach((card) => {
+          if (!card) return;
+          const img = card.querySelector('img');
+          if (!img) return;
+
+          gsap.fromTo(
+            img,
+            { scale: 1 },
+            {
+              scale: 1.08,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: card,
+                containerAnimation: tween,
+                start: 'left center',
+                end: 'right center',
+                scrub: true,
+              },
+            }
+          );
+        });
+      });
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
 
   return (
     <section
       ref={containerRef}
-      className="py-24 md:py-36 bg-[#040e08] relative overflow-hidden border-t border-emerald-950/80"
+      className="py-20 md:py-28 bg-[#040e08] relative overflow-hidden border-t border-emerald-950/80"
     >
       {/* Glow Effects */}
       <div className="absolute top-1/2 left-1/3 w-[650px] h-[400px] bg-emerald-600/10 rounded-full blur-[160px] pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 mb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 mb-10">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-xs font-bold text-deli-amber-400 uppercase tracking-widest mb-3">
@@ -118,15 +166,18 @@ export const HorizontalFoodShowcase: React.FC = () => {
         </div>
       </div>
 
-      {/* Horizontal Food Slider */}
-      <div className="w-full overflow-x-auto pb-8 pt-2 scrollbar-none snap-x snap-mandatory px-4 sm:px-8">
-        <motion.div
-          style={{ x }}
+      {/* Horizontal Food Slider Track */}
+      <div className="w-full overflow-x-auto lg:overflow-visible pb-8 pt-2 scrollbar-none snap-x snap-mandatory lg:snap-none px-4 sm:px-8">
+        <div
+          ref={trackRef}
           className="flex gap-7 w-max will-change-transform"
         >
-          {showcaseItems.map((item) => (
+          {showcaseItems.map((item, index) => (
             <article
               key={item.id}
+              ref={(el) => {
+                cardsRef.current[index] = el;
+              }}
               className="w-[320px] sm:w-[420px] shrink-0 snap-center rounded-[2.2rem] bg-[#0A1E13] border border-emerald-500/30 hover:border-emerald-400/60 shadow-2xl shadow-black overflow-hidden flex flex-col justify-between group transition-all duration-300"
               data-cursor="explore"
             >
@@ -135,7 +186,7 @@ export const HorizontalFoodShowcase: React.FC = () => {
                 <img
                   src={item.image}
                   alt={item.name}
-                  className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+                  className="w-full h-full object-cover transition-transform duration-700 ease-out will-change-transform"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0A1E13] via-transparent to-black/30" />
 
@@ -203,7 +254,7 @@ export const HorizontalFoodShowcase: React.FC = () => {
               </div>
             </article>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );
