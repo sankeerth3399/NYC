@@ -72,6 +72,7 @@ body {
   overflow-x: hidden;
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 #root {
@@ -80,7 +81,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Typography Utility */
+/* Typography Utility with Fluid Clamping */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   text-transform: uppercase;
@@ -98,11 +99,12 @@ button {
   cursor: pointer;
   border: none;
   background: none;
+  touch-action: manipulation;
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-black);
@@ -146,7 +148,7 @@ button {
 
 .hud-pill {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: clamp(0.68rem, 1.1vw, 0.75rem);
   letter-spacing: 0.1em;
   padding: 0.25rem 0.65rem;
   border-radius: 9999px;
@@ -157,7 +159,7 @@ button {
   gap: 0.4rem;
 }
 
-/* Button Styles */
+/* Button Styles with Fluid Sizing */
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -166,11 +168,11 @@ button {
   background: linear-gradient(135deg, var(--green-primary), var(--green-emerald));
   color: #ffffff;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: clamp(0.82rem, 1.4vw, 1rem);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: 0.85rem 1.75rem;
+  padding: clamp(0.6rem, 1.2vw, 0.85rem) clamp(1rem, 2vw, 1.75rem);
   border-radius: 6px;
   transition: var(--transition-smooth);
   box-shadow: 0 4px 20px var(--green-glow);
@@ -193,11 +195,11 @@ button {
   background: linear-gradient(135deg, var(--gold-primary), #d97706);
   color: #000000;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: clamp(0.82rem, 1.4vw, 1rem);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: 0.85rem 1.75rem;
+  padding: clamp(0.6rem, 1.2vw, 0.85rem) clamp(1rem, 2vw, 1.75rem);
   border-radius: 6px;
   transition: var(--transition-smooth);
   box-shadow: 0 4px 20px var(--gold-glow);
@@ -218,11 +220,11 @@ button {
   background: linear-gradient(135deg, var(--whatsapp-green), var(--whatsapp-dark));
   color: #ffffff;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: clamp(0.82rem, 1.4vw, 1rem);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: 0.85rem 1.75rem;
+  padding: clamp(0.6rem, 1.2vw, 0.85rem) clamp(1rem, 2vw, 1.75rem);
   border-radius: 6px;
   transition: var(--transition-smooth);
   box-shadow: 0 4px 20px var(--whatsapp-glow);
@@ -243,11 +245,11 @@ button {
   background: rgba(255, 255, 255, 0.04);
   color: var(--text-primary);
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: clamp(0.82rem, 1.4vw, 1rem);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: 0.85rem 1.75rem;
+  padding: clamp(0.6rem, 1.2vw, 0.85rem) clamp(1rem, 2vw, 1.75rem);
   border-radius: 6px;
   border: 1px solid var(--border-medium);
   transition: var(--transition-smooth);
@@ -261,21 +263,21 @@ button {
   transform: translateY(-2px);
 }
 
-/* Grid Noise & Ambient Overlay */
+/* Atmospheric Glows */
 .ambient-glow {
   position: absolute;
   border-radius: 50%;
-  filter: blur(120px);
+  filter: blur(100px);
   pointer-events: none;
   z-index: 0;
 }
 
 .glow-emerald {
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, rgba(5, 46, 22, 0) 70%);
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.24) 0%, rgba(5, 46, 22, 0) 70%);
 }
 
 .glow-gold {
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, rgba(245, 158, 11, 0) 70%);
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.20) 0%, rgba(245, 158, 11, 0) 70%);
 }
 
 /* Animations */
@@ -297,32 +299,27 @@ button {
   animation: pulseWhatsApp 2.2s infinite ease-in-out;
 }
 
+@keyframes floatEmbers {
+  0% { transform: translateY(0) translateX(0) scale(1); opacity: 0.8; }
+  50% { transform: translateY(-30px) translateX(15px) scale(1.1); opacity: 0.4; }
+  100% { transform: translateY(-60px) translateX(-10px) scale(0.9); opacity: 0; }
+}
+
+.animate-swipe-hint {
+  animation: swipeHint 1.8s infinite ease-in-out;
+}
+
+@keyframes swipeHint {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(-8px); opacity: 1; }
+}
+
 /* Container */
 .container {
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-@media (max-width: 768px) {
-  .container {
-    padding: 0 1rem;
-  }
-  .btn-primary, .btn-gold, .btn-whatsapp, .btn-outline {
-    padding: 0.75rem 1.25rem;
-    font-size: 0.9rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .container {
-    padding: 0 0.85rem;
-  }
-  .btn-primary, .btn-gold, .btn-whatsapp, .btn-outline {
-    padding: 0.65rem 1rem;
-    font-size: 0.85rem;
-  }
+  padding: 0 clamp(0.85rem, 3vw, 2rem);
 }
 
 /* Accessibility */

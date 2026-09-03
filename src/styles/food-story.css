@@ -1,14 +1,24 @@
-/* Pinned Story Stages */
+/* Pinned Story Stages with 100dvh for zero mobile jump */
 .story-pinned-section {
   position: relative;
   width: 100%;
   max-width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background-color: var(--bg-black);
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Atmospheric Mobile Grill Glow */
+.mobile-atmospheric-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 45%, rgba(245, 158, 11, 0.12) 0%, rgba(21, 128, 61, 0.08) 40%, rgba(6, 11, 8, 0.98) 75%);
+  z-index: 1;
 }
 
 /* Cinematic Video / Canvas Stage */
@@ -20,7 +30,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
+  z-index: 2;
 }
 
 .food-story-canvas {
@@ -40,21 +50,21 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 5.5rem 2rem 1.5rem 2rem;
+  padding: clamp(3.8rem, 7vh, 5.5rem) clamp(0.75rem, 2.5vw, 2rem) clamp(0.6rem, 2vh, 1.25rem) clamp(0.75rem, 2.5vw, 2rem);
 }
 
 /* Corner Frame Brackets */
 .hud-corner {
   position: absolute;
-  width: 24px;
-  height: 24px;
-  border-color: rgba(255, 255, 255, 0.25);
+  width: 22px;
+  height: 22px;
+  border-color: rgba(255, 255, 255, 0.22);
   pointer-events: none;
 }
-.hud-corner-tl { top: 5rem; left: 1.5rem; border-top: 2px solid; border-left: 2px solid; }
-.hud-corner-tr { top: 5rem; right: 1.5rem; border-top: 2px solid; border-right: 2px solid; }
-.hud-corner-bl { bottom: 4.5rem; left: 1.5rem; border-bottom: 2px solid; border-left: 2px solid; }
-.hud-corner-br { bottom: 4.5rem; right: 1.5rem; border-bottom: 2px solid; border-right: 2px solid; }
+.hud-corner-tl { top: clamp(4.5rem, 8vh, 5.2rem); left: clamp(1rem, 2.5vw, 2rem); border-top: 2px solid; border-left: 2px solid; }
+.hud-corner-tr { top: clamp(4.5rem, 8vh, 5.2rem); right: clamp(1rem, 2.5vw, 2rem); border-top: 2px solid; border-right: 2px solid; }
+.hud-corner-bl { bottom: clamp(4rem, 7vh, 4.8rem); left: clamp(1rem, 2.5vw, 2rem); border-bottom: 2px solid; border-left: 2px solid; }
+.hud-corner-br { bottom: clamp(4rem, 7vh, 4.8rem); right: clamp(1rem, 2.5vw, 2rem); border-bottom: 2px solid; border-right: 2px solid; }
 
 /* HUD Top Header Telemetry */
 .hud-header {
@@ -62,28 +72,28 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .hud-rec-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: clamp(0.65rem, 1.2vw, 0.75rem);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   color: #ffffff;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 0.35rem 0.65rem;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 0.3rem 0.6rem;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   white-space: nowrap;
 }
 
 .rec-dot {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background-color: var(--red-rec);
   box-shadow: 0 0 10px var(--red-glow);
@@ -93,91 +103,52 @@
 .hud-specs-badge {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: clamp(0.4rem, 1vw, 0.85rem);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: clamp(0.64rem, 1.1vw, 0.72rem);
   color: var(--text-secondary);
-  background: rgba(0, 0, 0, 0.5);
-  padding: 0.35rem 0.75rem;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 0.3rem 0.65rem;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   white-space: nowrap;
-}
-
-/* Center Crosshair Reticle */
-.hud-crosshair {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 160px;
-  height: 160px;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.25;
-  transition: var(--transition-smooth);
-}
-
-.hud-crosshair::before,
-.hud-crosshair::after {
-  content: '';
-  position: absolute;
-  background-color: rgba(255, 255, 255, 0.35);
-}
-
-.hud-crosshair::before {
-  width: 24px;
-  height: 1px;
-}
-.hud-crosshair::after {
-  height: 24px;
-  width: 1px;
-}
-
-.reticle-ring {
-  width: 80px;
-  height: 80px;
-  border: 1px dashed rgba(245, 158, 11, 0.35);
-  border-radius: 50%;
 }
 
 /* Lateral HUD Telemetry Panels */
 .hud-side-panel {
   position: absolute;
-  max-width: 290px;
+  max-width: clamp(240px, 22vw, 300px);
   pointer-events: auto;
   z-index: 20;
   transition: var(--transition-smooth);
 }
 
 .hud-left-panel {
-  left: clamp(1.5rem, 3.5vw, 3.5rem);
+  left: clamp(1.25rem, 3.5vw, 3.5rem);
   top: 50%;
   transform: translateY(-50%);
 }
 
 .hud-right-panel {
-  right: clamp(1.5rem, 3.5vw, 3.5rem);
+  right: clamp(1.25rem, 3.5vw, 3.5rem);
   top: 50%;
   transform: translateY(-50%);
 }
 
 .hud-tagline {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: clamp(0.68rem, 1vw, 0.75rem);
   color: var(--green-bright);
   letter-spacing: 0.15em;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.3rem;
 }
 
 .hud-title {
   font-family: var(--font-display);
-  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
   line-height: 0.96;
   color: #ffffff;
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.55rem;
 }
 
 .hud-title span {
@@ -185,16 +156,16 @@
 }
 
 .hud-desc {
-  font-size: clamp(0.8rem, 1.1vw, 0.88rem);
+  font-size: clamp(0.78rem, 1.1vw, 0.88rem);
   color: var(--text-secondary);
   line-height: 1.45;
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
 }
 
 .hud-data-table {
   width: 100%;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: clamp(0.65rem, 1vw, 0.72rem);
   border-collapse: collapse;
 }
 
@@ -203,7 +174,7 @@
 }
 
 .hud-data-table td {
-  padding: 0.35rem 0;
+  padding: 0.3rem 0;
 }
 
 .hud-data-table td:first-child {
@@ -216,75 +187,12 @@
   font-weight: 600;
 }
 
-/* Floating Ingredient Cards on Exploded View (Desktop) */
-.ingredient-callout-container {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 15;
-}
-
-.ingredient-callout {
-  position: absolute;
-  pointer-events: auto;
-  background: rgba(8, 18, 12, 0.9);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-green);
-  border-radius: 6px;
-  padding: 0.5rem 0.8rem;
-  max-width: 240px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65);
-  opacity: 0;
-  transform: translateY(15px);
-  transition: opacity 0.35s ease, transform 0.35s ease;
-}
-
-.ingredient-callout.active {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.callout-tag {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  color: var(--gold-light);
-  letter-spacing: 0.1em;
-  display: block;
-}
-
-.callout-name {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  color: #ffffff;
-  margin: 0.1rem 0;
-}
-
-.callout-specs {
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-  line-height: 1.35;
-}
-
-.callout-temp {
-  display: inline-block;
-  margin-top: 0.25rem;
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  color: var(--green-light);
-  background: rgba(16, 185, 129, 0.15);
-  padding: 0.1rem 0.45rem;
-  border-radius: 3px;
-}
-
 /* Bottom Scrub Ruler */
 .hud-bottom-scrub {
   width: 100%;
   pointer-events: auto;
   background: linear-gradient(180deg, transparent, rgba(6, 11, 8, 0.94) 30%);
-  padding: 1.25rem 0 0.5rem 0;
+  padding: clamp(0.75rem, 2vh, 1.25rem) 0 0.35rem 0;
 }
 
 .scrub-telemetry-row {
@@ -292,8 +200,8 @@
   align-items: center;
   justify-content: space-between;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  margin-bottom: 0.45rem;
+  font-size: clamp(0.65rem, 1vw, 0.72rem);
+  margin-bottom: 0.35rem;
   gap: 0.5rem;
 }
 
@@ -309,7 +217,7 @@
 .scrub-ruler-track {
   position: relative;
   width: 100%;
-  height: 20px;
+  height: clamp(16px, 2.5vh, 20px);
   background: rgba(255, 255, 255, 0.03);
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
@@ -355,10 +263,10 @@
   pointer-events: none;
 }
 
-/* Prompt to Scroll */
+/* Prompt to Scroll / Swipe */
 .scroll-prompt-indicator {
   position: absolute;
-  bottom: 5rem;
+  bottom: clamp(4.5rem, 8vh, 5.5rem);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -366,12 +274,13 @@
   align-items: center;
   gap: 0.35rem;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: clamp(0.68rem, 1.1vw, 0.75rem);
   letter-spacing: 0.18em;
   color: var(--text-secondary);
   pointer-events: none;
-  transition: opacity 0.5s ease;
+  transition: opacity 0.4s ease;
   white-space: nowrap;
+  z-index: 15;
 }
 
 .scroll-prompt-mouse {
@@ -396,15 +305,16 @@
 
 @keyframes mouseWheel {
   0% { transform: translate(-50%, 0); opacity: 1; }
-  100% { transform: translate(-50%, 10px); opacity: 0; }
+  100% { transform: translate(-50%, 9px); opacity: 0; }
 }
 
-/* 3D Sandwich Story Component Styles */
+/* 3D Sandwich Story Component Styles with 100dvh */
 .sandwich-stage {
   position: relative;
   width: 100%;
   max-width: 100vw;
   height: 100vh;
+  height: 100dvh;
   perspective: 1200px;
   display: flex;
   align-items: center;
@@ -415,8 +325,8 @@
 
 .sandwich-stack-wrapper {
   position: relative;
-  width: min(88vw, 620px);
-  height: min(60vh, 420px);
+  width: clamp(290px, 86vw, 620px);
+  height: clamp(260px, 45dvh, 420px);
   transform-style: preserve-3d;
   display: flex;
   align-items: center;
@@ -438,31 +348,31 @@
 .sandwich-layer-content {
   position: relative;
   width: min(94%, 540px);
-  min-height: 46px;
+  min-height: clamp(36px, 5vh, 46px);
   border-radius: 8px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.75), inset 0 2px 4px rgba(255, 255, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.15rem;
+  padding: 0 clamp(0.6rem, 2vw, 1.15rem);
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
-/* Floating WhatsApp Sticky Action Button */
+/* Floating WhatsApp Sticky Action Button with Safe-Area */
 .floating-whatsapp-btn {
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+  right: max(1.25rem, env(safe-area-inset-right));
   z-index: 99;
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.55rem;
   background: linear-gradient(135deg, #25d366, #128c7e);
   color: #ffffff;
-  padding: 0.75rem 1.25rem;
+  padding: 0.7rem 1.15rem;
   border-radius: 50px;
   font-family: var(--font-display);
-  font-size: 0.92rem;
+  font-size: clamp(0.82rem, 1.3vw, 0.92rem);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   font-weight: 700;
@@ -481,24 +391,24 @@
 /* Tablet Layout (768px - 1099px) */
 @media (min-width: 768px) and (max-width: 1099px) {
   .hud-side-panel {
-    max-width: 260px;
+    max-width: 250px;
   }
   .hud-left-panel {
-    left: 1.5rem;
+    left: 1.25rem;
   }
   .hud-right-panel {
-    display: none; /* Keep right side open for unobstructed food viewing */
+    display: none;
   }
   .hud-layer {
-    padding: 5rem 1.25rem 1.25rem 1.25rem;
+    padding: 4.8rem 1.25rem 1.25rem 1.25rem;
   }
 }
 
-/* Mobile Layout (< 768px) */
+/* Mobile Devices (< 768px) */
 @media (max-width: 767px) {
   .hud-side-panel {
     position: absolute;
-    top: 5.5rem;
+    top: 4.8rem;
     left: 1rem !important;
     right: 1rem !important;
     max-width: none;
@@ -509,7 +419,7 @@
     -webkit-backdrop-filter: blur(14px);
     border: 1px solid var(--border-green);
     border-radius: 8px;
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 0.85rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -528,15 +438,6 @@
     display: none;
   }
 
-  .hud-layer {
-    padding: 4.2rem 0.65rem 0.65rem 0.65rem;
-  }
-
-  .hud-title {
-    font-size: 1.5rem;
-    margin-bottom: 0.3rem;
-  }
-
   .hud-specs-badge span:nth-child(3),
   .hud-specs-badge span:nth-child(4) {
     display: none;
@@ -546,28 +447,15 @@
     display: none;
   }
 
-  .sandwich-layer-content {
-    padding: 0 0.75rem;
-    min-height: 40px;
-  }
-
-  .sandwich-layer-content span {
-    font-size: 0.88rem !important;
-  }
-
   .floating-whatsapp-btn {
-    bottom: 1rem;
-    right: 1rem;
-    padding: 0.65rem 1rem;
-    font-size: 0.82rem;
+    bottom: max(0.85rem, env(safe-area-inset-bottom));
+    right: max(0.85rem, env(safe-area-inset-right));
+    padding: 0.6rem 0.95rem;
+    font-size: 0.8rem;
   }
 }
 
 @media (max-width: 480px) {
-  .hud-layer {
-    padding: 4rem 0.5rem 0.5rem 0.5rem;
-  }
-
   .hud-rec-badge {
     font-size: 0.65rem;
     padding: 0.2rem 0.45rem;
@@ -583,21 +471,12 @@
     font-size: 0.65rem;
   }
 
-  .sandwich-layer-content {
-    min-height: 36px;
-    padding: 0 0.55rem;
-  }
-
-  .sandwich-layer-content span {
-    font-size: 0.8rem !important;
-  }
-
   .floating-whatsapp-btn span {
     display: none;
   }
   .floating-whatsapp-btn {
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     padding: 0;
     justify-content: center;
