@@ -5,7 +5,12 @@ export const CustomCursor: React.FC = () => {
   const [isPointer, setIsPointer] = useState(false);
   const [cursorText, setCursorText] = useState('');
   const [isVisible, setIsVisible] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(true);
+  const [enabled, setEnabled] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const isFinePointer = window.matchMedia('(pointer: fine)').matches && window.innerWidth >= 1024;
+    const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    return isFinePointer && !isReduced;
+  });
 
   const mouseX = useMotionValue(-100);
   const mouseY = useMotionValue(-100);
@@ -15,27 +20,32 @@ export const CustomCursor: React.FC = () => {
   const cursorY = useSpring(mouseY, springConfig);
 
   useEffect(() => {
-    // Check if device has fine pointer (desktop) and not coarse touch
-    const isTouch = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 1024;
-    setIsTouchDevice(isTouch);
+    if (!enabled) return;
 
-    if (isTouch) return;
+    const handleResize = () => {
+      const isFinePointer = window.matchMedia('(pointer: fine)').matches && window.innerWidth >= 1024;
+      const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      setEnabled(isFinePointer && !isReduced);
+    };
 
     const handleMouseMove = (e: MouseEvent) => {
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
-      if (!isVisible) setIsVisible(true);
+      setIsVisible(true);
 
       const target = e.target as HTMLElement | null;
       if (!target) return;
 
-      // Check if hovering interactive element
-      const interactiveEl = target.closest('a, button, input, select, textarea, [role="button"], .interactive-hover');
       const viewEl = target.closest('[data-cursor="view"], .cursor-view');
+      const exploreEl = target.closest('[data-cursor="explore"], .cursor-explore');
+      const interactiveEl = target.closest('a, button, input, select, textarea, [role="button"], .interactive-hover');
 
       if (viewEl) {
         setIsPointer(true);
         setCursorText('VIEW');
+      } else if (exploreEl) {
+        setIsPointer(true);
+        setCursorText('EXPLORE');
       } else if (interactiveEl) {
         setIsPointer(true);
         setCursorText('');
@@ -48,18 +58,20 @@ export const CustomCursor: React.FC = () => {
     const handleMouseLeave = () => setIsVisible(false);
     const handleMouseEnter = () => setIsVisible(true);
 
+    window.addEventListener('resize', handleResize);
     window.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseleave', handleMouseLeave);
     document.addEventListener('mouseenter', handleMouseEnter);
 
     return () => {
+      window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseleave', handleMouseLeave);
       document.removeEventListener('mouseenter', handleMouseEnter);
     };
-  }, [isVisible, mouseX, mouseY]);
+  }, [enabled, mouseX, mouseY]);
 
-  if (isTouchDevice || !isVisible) return null;
+  if (!enabled || !isVisible) return null;
 
   return (
     <motion.div
@@ -73,17 +85,27 @@ export const CustomCursor: React.FC = () => {
     >
       <motion.div
         animate={{
-          width: cursorText ? 56 : isPointer ? 38 : 12,
-          height: cursorText ? 56 : isPointer ? 38 : 12,
-          backgroundColor: cursorText ? 'rgba(229, 152, 25, 0.95)' : isPointer ? 'rgba(34, 197, 94, 0.35)' : 'rgba(229, 152, 25, 0.9)',
-          borderColor: isPointer ? '#22c55e' : '#E59819',
+          width: cursorText ? 64 : isPointer ? 40 : 12,
+          height: cursorText ? 64 : isPointer ? 40 : 12,
+          backgroundColor: cursorText
+            ? 'rgba(229, 152, 25, 0.95)'
+            : isPointer
+            ? 'rgba(34, 197, 94, 0.25)'
+            : 'rgba(229, 152, 25, 0.9)',
+          borderColor: cursorText ? '#E59819' : isPointer ? '#4ade80' : '#E59819',
           borderWidth: isPointer && !cursorText ? 2 : 0,
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-        className="rounded-full flex items-center justify-center shadow-lg backdrop-blur-xs select-none"
+        className="rounded-full flex items-center justify-center shadow-2xl backdrop-blur-xs select-none"
       >
         {cursorText && (
-          <span className="text-black font-extrabold text-[11px] tracking-tight">{cursorText}</span>
+          <motion.span
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-black font-black text-[10px] tracking-widest uppercase text-center"
+          >
+            {cursorText}
+          </motion.span>
         )}
       </motion.div>
     </motion.div>

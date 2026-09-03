@@ -70,7 +70,7 @@ export const Menu: React.FC = () => {
       <div className="absolute top-20 right-10 w-[500px] h-[500px] bg-emerald-600/10 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Menu Header Banner */}
-      <section className="pt-16 pb-16 bg-gradient-to-b from-[#0B2A1A] via-[#0E3521] to-[#08170F] border-b border-emerald-900/60 relative">
+      <section className="pt-20 pb-20 bg-gradient-to-b from-[#05150C] via-[#092214] to-[#08170F] border-b border-emerald-900/60 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 relative z-10">
           
           <motion.div
@@ -87,7 +87,7 @@ export const Menu: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl sm:text-6xl font-display font-black text-white tracking-tight"
+            className="text-section-title font-display font-black text-white tracking-tight uppercase"
           >
             Our Full Menu
           </motion.h1>
@@ -110,10 +110,19 @@ export const Menu: React.FC = () => {
           >
             <a
               href={`tel:${businessData.phoneRaw}`}
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-gradient-to-r from-deli-amber-500 to-amber-600 hover:from-deli-amber-400 hover:to-amber-500 text-black font-extrabold text-sm sm:text-base shadow-xl hover:scale-105 active:scale-95 transition-all"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-gradient-to-r from-deli-amber-500 to-amber-600 hover:from-deli-amber-400 hover:to-amber-500 text-black font-extrabold text-sm sm:text-base shadow-xl hover:scale-105 active:scale-95 transition-all"
             >
               <Phone className="w-5 h-5" />
-              <span>Call to Order: (315) 864-3000</span>
+              <span>Call: (315) 864-3000</span>
+            </a>
+
+            <a
+              href={businessData.whatsappUrl || `https://wa.me/${businessData.whatsappRaw || '13158643000'}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#25D366] hover:bg-[#20bd5a] text-black font-black text-sm sm:text-base shadow-xl shadow-[#25D366]/20 hover:scale-105 active:scale-95 transition-all"
+            >
+              <span>Order on WhatsApp</span>
             </a>
 
             <a
